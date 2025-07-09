@@ -1,0 +1,6 @@
+problem_name: backtest
+problem_type: test
+obj_type: max
+problem_size: 0 # not used
+func_name: heuristics
+description: Performing alpha mining, generate novel and interpretable alpha factors that could help predict future stock returns.

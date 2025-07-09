@@ -101,6 +101,8 @@ def extract_code_from_generator(content):
         code_string = "import numpy as np\n" + code_string
     if "torch" in code_string:
         code_string = "import torch\n" + code_string
+    if "pd" in code_string:
+        code_string = "import pandas as pd\n" + code_string
     return code_string
 
 

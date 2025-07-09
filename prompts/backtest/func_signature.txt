@@ -1,0 +1,1 @@
+def heuristics_v{version}(df: pd.DataFrame) -> pd.Series:
