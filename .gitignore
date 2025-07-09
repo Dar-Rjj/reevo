@@ -172,3 +172,5 @@ venv
 *.DS_Store
 exp/*
 ablation/*
+*.csv
+.export_cn_ex/*

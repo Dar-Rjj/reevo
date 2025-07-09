@@ -1,0 +1,7 @@
+_target_: utils.llm_client.qwen3_api.Qwen3APIClient
+
+# Using Qwen3 API. 请根据实际可用模型填写 model 名称
+model: qwen-plus
+temperature: 1.0  # temperature for chat completion
+api_key: ${oc.env:QWEN3_API_KEY,null}
+base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
