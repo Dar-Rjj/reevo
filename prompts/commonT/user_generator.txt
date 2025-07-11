@@ -1,0 +1,2 @@
+Write a thought tree for {problem_desc}
+{tree_desc}

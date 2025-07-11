@@ -131,3 +131,12 @@ def get_heuristic_name(module, possible_names: list[str]):
         if hasattr(module, func_name):
             if inspect.isfunction(getattr(module, func_name)):
                 return func_name
+
+
+# Extract tree from the response of the tree generator(tree)
+def extract_tree(content):
+    """Extract tree from the response of the tree generator."""
+    pattern_code = r'```json(.*?)```'
+    tree_string = re.search(pattern_code, content, re.DOTALL)
+    tree_string = tree_string.group(1).strip() if tree_string is not None else None
+    return tree_string

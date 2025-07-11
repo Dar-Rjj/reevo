@@ -1,0 +1,13 @@
+{user_generator}
+
+[Worse tree]
+{worse_tree}
+
+[Better tree]
+{better_tree}
+
+[Reflection]
+{reflection}
+
+[Improved code]
+Please write an improved tree structure according to the reflection. Output tree only and enclose your code with Json code block: ```json ... ```.

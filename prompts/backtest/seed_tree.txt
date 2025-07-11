@@ -1,0 +1,13 @@
+```json
+First-level thoughts
+├── Second-level thoughts
+    ├── Third-level thoughts
+    ├── Third-level thoughts
+        └── Fourth-level thoughts
+└── Second-level thoughts
+    ├── Third-level thoughts
+        ├── Fourth-level thoughts
+        └── Fourth-level thoughts
+    └── Third-level thoughts
+        └── Fourth-level thoughts
+```
