@@ -25,8 +25,11 @@ def main(cfg):
     crossover_llm = hydra.utils.instantiate(cfg.llm_crossover) if cfg.get("llm_crossover") else None
     mutation_llm = hydra.utils.instantiate(cfg.llm_mutation) if cfg.get("llm_mutation") else None
     
+    # add treevo(tree)
     if cfg.algorithm == "reevo":
         from reevo import ReEvo as LHH
+    elif cfg.algorithm == "treevo":
+        from treevo import TreEvo as LHH
     elif cfg.algorithm == "ael":
         from baselines.ael.ga import AEL as LHH
     elif cfg.algorithm == "eoh":
@@ -35,7 +38,8 @@ def main(cfg):
         raise NotImplementedError
 
     # Main algorithm
-    if cfg.algorithm != "reevo":
+    # add treevo(tree)
+    if cfg.algorithm != "reevo" and cfg.algorithm != "treevo":
         lhh = LHH(cfg, ROOT_DIR, client)
     else:
         lhh = LHH(cfg, ROOT_DIR, client, long_reflector_llm=long_ref_llm, short_reflector_llm=short_ref_llm, 

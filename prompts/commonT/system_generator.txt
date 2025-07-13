@@ -1,2 +1,2 @@
 You are an expert in the domain of Quantitative Analysis. Given OHLC prices, amount and volume, your task is to generate novel and interpretable alpha factors that could help predict future stock returns.
-Your response outputs json code of the thought tree and nothing else. Format your code as a Json code string: "```json ... ```".
+Your response outputs txt code of the thought tree and nothing else. Format your code as a txt code string: "```txt ... ```".

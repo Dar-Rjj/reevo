@@ -89,7 +89,9 @@ class TreEvo:
         self.user_reflector_lt_prompt = file_to_string(f'{self.prompt_dir}/commonT/user_reflector_lt.txt') # long-term reflection
         self.crossover_prompt = file_to_string(f'{self.prompt_dir}/commonT/crossover.txt')
         self.mutation_prompt = file_to_string(f'{self.prompt_dir}/commonT/mutation.txt')
-        self.system_code_generator_prompt = file_to_string(f'{self.prompt_dir}/commonT/system_code_generator.txt')
+        self.system_code_generator_prompt = file_to_string(f'{self.prompt_dir}/commonT/system_code_generator.txt').format(
+            func_name=self.func_name
+        )
         self.user_generator_prompt = file_to_string(f'{self.prompt_dir}/commonT/user_generator.txt').format(
             problem_desc=self.problem_desc,
             tree_desc=self.tree_desc,
@@ -106,13 +108,31 @@ class TreEvo:
 
 
     def init_population(self) -> None:
-        # Genrate the seed function(tree)
-        system = self.system_generator_prompt
-        user = self.user_generator_prompt + "\n" + self.seed_prompt + "\n" + self.long_term_reflection_str
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
-        logging.info("Generating seed function...")
+        # Genrate the seed tree(tree)
+        # logging.info("Generating seed tree...")
+        # system = self.system_generator_prompt
+        # user = self.user_generator_prompt + "\n" + self.seed_prompt + "\n" + self.long_term_reflection_str
+        # messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
-        responses = self.generator_llm.multi_chat_completion([messages])
+        # responses = self.generator_llm.multi_chat_completion([messages])
+        # population_tree = [self.response_to_tree(response, response_id) for response_id, response in enumerate(responses)]
+
+        seed_ind_tree = {
+            "tree_path": f"problem_iter{self.iteration}_tree0.txt",
+            "tree": self.seed_tree,
+            "response_id": 0,
+        }
+        self.seed_ind_tree = seed_ind_tree
+
+        # Genrate the seed function(tree)
+        logging.info("Generating seed function...")
+        system = self.system_code_generator_prompt + "\n" + self.func_desc
+        user = self.seed_tree
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        logging.info("Seed Code Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
+
+
+        responses = self.generator_llm.multi_chat_completion([messages]) # Increase the temperature for diverse initial population
         population = [self.response_to_individual(response, response_id) for response_id, response in enumerate(responses)]
 
         # Run code and evaluate population
@@ -129,7 +149,8 @@ class TreEvo:
             "response_id": 0,
         }
         self.seed_ind = seed_ind
-        self.population = self.evaluate_population([seed_ind])
+        self.seed_ind = merge_lists_by_response_id([self.seed_ind], [self.seed_ind_tree])[0] # Merge seed tree and seed function into one individual
+        self.population = self.evaluate_population([self.seed_ind])
 
         # If seed function is invalid, stop
         if not self.seed_ind["exec_success"]:
@@ -138,13 +159,22 @@ class TreEvo:
         self.update_iter()
         
         # Generate responses
-        system = self.code_generator_prompt
+        system = self.system_generator_prompt
         user = self.user_generator_prompt + "\n" + self.seed_prompt + "\n" + self.long_term_reflection_str
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        logging.info("Initial Population Tree Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
+
+        responses = self.generator_llm.multi_chat_completion([messages], self.cfg.init_pop_size , temperature = self.generator_llm.temperature + 0.3)
+        population_tree = [self.response_to_tree(response, response_id) for response_id, response in enumerate(responses)]
+
+        messages_lst = self.gen_code_prompt(population_tree)
         logging.info("Initial Population Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
 
-        responses = self.generator_llm.multi_chat_completion([messages], self.cfg.init_pop_size, temperature = self.generator_llm.temperature + 0.3) # Increase the temperature for diverse initial population
+        responses = self.generator_llm.multi_chat_completion(messages_lst) # Increase the temperature for diverse initial population
         population = [self.response_to_individual(response, response_id) for response_id, response in enumerate(responses)]
+
+        # Merge population tree and population code into one individual
+        population = merge_lists_by_response_id(population, population_tree)
 
         # Run code and evaluate population
         population = self.evaluate_population(population)
@@ -153,7 +183,26 @@ class TreEvo:
         self.population = population
         self.update_iter()
 
-    
+
+    def response_to_tree(self, response: str, response_id: int, file_name: str=None) -> dict:
+        """
+        Convert response to tree
+        """
+        # Write response to file
+        file_name = f"problem_iter{self.iteration}_tree{response_id}.txt" if file_name is None else file_name + ".txt"
+        with open(file_name, 'w') as file:
+            file.writelines(response + '\n')
+
+        tree = extract_tree_from_generator(response)
+
+        individual = {
+            "tree_path": f"problem_iter{self.iteration}_tree{response_id}.txt",
+            "tree": tree,
+            "response_id": response_id,
+        }
+        return individual
+
+
     def response_to_individual(self, response: str, response_id: int, file_name: str=None) -> dict:
         """
         Convert response to individual
@@ -225,7 +274,7 @@ class TreEvo:
             individual = population[response_id]
             stdout_filepath = individual["stdout_filepath"]
             with open(stdout_filepath, 'r') as f:  # read the stdout file
-                stdout_str = f.read() 
+                stdout_str = f.read()
             traceback_msg = filter_traceback(stdout_str)
             
             individual = population[response_id]
@@ -338,12 +387,27 @@ class TreEvo:
                 return None
         return selected_population
 
+    # (tree)
+    def gen_code_prompt(self, population: list[dict]) -> list[dict]:
+        """
+        Generate code prompt for the individual.
+        """
+        messages_lst = []
+        system = self.system_code_generator_prompt + "\n" + self.func_desc
+        for individual in population:
+            user = individual["tree"]
+            messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+            messages_lst.append(messages)
+        
+        return messages_lst
+
+
     def gen_short_term_reflection_prompt(self, ind1: dict, ind2: dict) -> tuple[list[dict], str, str]:
         """
         Short-term reflection before crossovering two individuals.
         """
         if ind1["obj"] == ind2["obj"]:
-            print(ind1["code"], ind2["code"])
+            print(ind1["tree"], ind2["tree"])
             raise ValueError("Two individuals to crossover have the same objective value!")
         # Determine which individual is better or worse
         if ind1["obj"] < ind2["obj"]:
@@ -351,16 +415,16 @@ class TreEvo:
         else: # robust in rare cases where two individuals have the same objective value
             better_ind, worse_ind = ind2, ind1
 
-        worse_code = filter_code(worse_ind["code"])
-        better_code = filter_code(better_ind["code"])
+        worse_tree = worse_ind["tree"]
+        better_tree = better_ind["tree"]
         
         system = self.system_reflector_prompt
         user = self.user_reflector_st_prompt.format(
             func_name = self.func_name,
             func_desc = self.func_desc,
             problem_desc = self.problem_desc,
-            worse_code=worse_code,
-            better_code=better_code
+            worse_tree=worse_tree,
+            better_tree=better_tree
             )
         message = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         
@@ -368,7 +432,7 @@ class TreEvo:
         if self.print_short_term_reflection_prompt:
                 logging.info("Short-term Reflection Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
                 self.print_short_term_reflection_prompt = False
-        return message, worse_code, better_code
+        return message, worse_tree, better_tree
 
 
     def short_term_reflection(self, population: list[dict]) -> tuple[list[list[dict]], list[str], list[str]]:
@@ -376,22 +440,22 @@ class TreEvo:
         Short-term reflection before crossovering two individuals.
         """
         messages_lst = []
-        worse_code_lst = []
-        better_code_lst = []
+        worse_tree_lst = []
+        better_tree_lst = []
         for i in range(0, len(population), 2):
             # Select two individuals
             parent_1 = population[i]
             parent_2 = population[i+1]
             
             # Short-term reflection
-            messages, worse_code, better_code = self.gen_short_term_reflection_prompt(parent_1, parent_2)
+            messages, worse_tree, better_tree = self.gen_short_term_reflection_prompt(parent_1, parent_2)
             messages_lst.append(messages)
-            worse_code_lst.append(worse_code)
-            better_code_lst.append(better_code)
+            worse_tree_lst.append(worse_tree)
+            better_tree_lst.append(better_tree)
         
         # Asynchronously generate responses
         response_lst = self.short_reflector_llm.multi_chat_completion(messages_lst)
-        return response_lst, worse_code_lst, better_code_lst
+        return response_lst, worse_tree_lst, better_tree_lst
     
     def long_term_reflection(self, short_term_reflections: list[str]) -> None:
         """
@@ -422,19 +486,15 @@ class TreEvo:
 
 
     def crossover(self, short_term_reflection_tuple: tuple[list[list[dict]], list[str], list[str]]) -> list[dict]:
-        reflection_content_lst, worse_code_lst, better_code_lst = short_term_reflection_tuple
+        reflection_content_lst, worse_tree_lst, better_tree_lst = short_term_reflection_tuple
         messages_lst = []
-        for reflection, worse_code, better_code in zip(reflection_content_lst, worse_code_lst, better_code_lst):
+        for reflection, worse_tree, better_tree in zip(reflection_content_lst, worse_tree_lst, better_tree_lst):
             # Crossover
             system = self.system_generator_prompt
-            func_signature0 = self.func_signature.format(version=0)
-            func_signature1 = self.func_signature.format(version=1)
             user = self.crossover_prompt.format(
                 user_generator = self.user_generator_prompt,
-                func_signature0 = func_signature0,
-                func_signature1 = func_signature1,
-                worse_code = worse_code,
-                better_code = better_code,
+                worse_tree = worse_tree,
+                better_tree = better_tree,
                 reflection = reflection,
                 func_name = self.func_name,
             )
@@ -448,7 +508,16 @@ class TreEvo:
         
         # Asynchronously generate responses
         response_lst = self.crossover_llm.multi_chat_completion(messages_lst)
-        crossed_population = [self.response_to_individual(response, response_id) for response_id, response in enumerate(response_lst)]
+        crossed_population_tree = [self.response_to_tree(response, response_id) for response_id, response in enumerate(response_lst)]
+
+        messages_lst = self.gen_code_prompt(crossed_population_tree)
+        logging.info("Generating Crossover Population Code ...")
+
+        responses = self.generator_llm.multi_chat_completion(messages_lst) # Increase the temperature for diverse initial population
+        crossed_population = [self.response_to_individual(response, response_id) for response_id, response in enumerate(responses)]
+
+        # Merge population tree and population code into one individual
+        crossed_population = merge_lists_by_response_id(crossed_population, crossed_population_tree)
 
         assert len(crossed_population) == self.cfg.pop_size
         return crossed_population
@@ -457,12 +526,10 @@ class TreEvo:
     def mutate(self) -> list[dict]:
         """Elitist-based mutation. We only mutate the best individual to generate n_pop new individuals."""
         system = self.system_generator_prompt
-        func_signature1 = self.func_signature.format(version=1) 
         user = self.mutation_prompt.format(
             user_generator = self.user_generator_prompt,
             reflection = self.long_term_reflection_str + self.external_knowledge,
-            func_signature1 = func_signature1,
-            elitist_code = filter_code(self.elitist["code"]),
+            elitist_tree = self.elitist["tree"],
             func_name = self.func_name,
         )
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -470,7 +537,16 @@ class TreEvo:
             logging.info("Mutation Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
             self.print_mutate_prompt = False
         responses = self.mutation_llm.multi_chat_completion([messages], int(self.cfg.pop_size * self.mutation_rate))
+        population_tree = [self.response_to_tree(response, response_id) for response_id, response in enumerate(responses)]
+        
+        messages_lst = self.gen_code_prompt(population_tree)
+        logging.info("Generating Mutation Population Code ...")
+
+        responses = self.generator_llm.multi_chat_completion(messages_lst) # Increase the temperature for diverse initial population
         population = [self.response_to_individual(response, response_id) for response_id, response in enumerate(responses)]
+
+        # Merge population tree and population code into one individual
+        population = merge_lists_by_response_id(population, population_tree)
         return population
 
 

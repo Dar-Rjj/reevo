@@ -1,13 +1,9 @@
-```json
-First-level thoughts
-├── Second-level thoughts
-    ├── Third-level thoughts
-    ├── Third-level thoughts
-        └── Fourth-level thoughts
-└── Second-level thoughts
-    ├── Third-level thoughts
-        ├── Fourth-level thoughts
-        └── Fourth-level thoughts
-    └── Third-level thoughts
-        └── Fourth-level thoughts
+```txt
+Volume Weighted Close-to-Open Return
+├── Calculate Close-to-Open Return
+│   ├── Use Close price
+│   └── Use Open price
+└── Weight by Volume
+    ├── Normalize Volume
+    └── Multiply by Return
 ```

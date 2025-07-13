@@ -1,1 +1,1 @@
-The structure represents a hierarchical tree of thoughts, starting from a single first-level thought. Each thought can branch into sub-thoughts, which may vary in depth, some reaching the n-th level or beyond, others stopping earlier.
+The structure represents the thought in a hierarchical tree structure, starting from a single first-level thought. Each thought can branch into sub-thoughts, which may vary in depth, some reaching the n-th level or beyond, others stopping earlier.

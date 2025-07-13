@@ -1,1 +1,2 @@
-- Try generating novel and interpretable alpha factors that could help predict future stock returns.
+- Try generating a novel and interpretable alpha factor that could help predict future stock returns.
+- Only use information available up to time t. No future data leakage is allowed.

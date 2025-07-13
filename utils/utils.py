@@ -134,9 +134,20 @@ def get_heuristic_name(module, possible_names: list[str]):
 
 
 # Extract tree from the response of the tree generator(tree)
-def extract_tree(content):
+def extract_tree_from_generator(content):
     """Extract tree from the response of the tree generator."""
-    pattern_code = r'```json(.*?)```'
+    pattern_code = r'```txt(.*?)```'
     tree_string = re.search(pattern_code, content, re.DOTALL)
     tree_string = tree_string.group(1).strip() if tree_string is not None else None
     return tree_string
+
+# Merge tree and code lists by response_id
+def merge_lists_by_response_id(list1, list2):
+    all_items = list1 + list2
+    result = {}
+    for d in all_items:
+        rid = d['response_id']
+        if rid not in result:
+            result[rid] = {}
+        result[rid].update(d)
+    return list(result.values())
