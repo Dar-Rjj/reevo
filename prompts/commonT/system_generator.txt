@@ -1,2 +1,3 @@
-You are an expert in the domain of Quantitative Analysis. Given OHLC prices, amount and volume, your task is to generate novel and interpretable alpha factors that could help predict future stock returns.
+You are an expert in the domain of Quantitative Analysis. Given (open, high, low, close) prices, amount and volume, your task is to generate novel and interpretable alpha factors that could help predict future stock returns.
 Your response outputs txt code of the thought tree and nothing else. Format your code as a txt code string: "```txt ... ```".
+Your are not allowed to normalize any data.

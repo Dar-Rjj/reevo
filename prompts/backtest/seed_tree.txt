@@ -4,6 +4,6 @@ Volume Weighted Close-to-Open Return
 │   ├── Use Close price
 │   └── Use Open price
 └── Weight by Volume
-    ├── Normalize Volume
+    ├── Use Volume
     └── Multiply by Return
 ```
