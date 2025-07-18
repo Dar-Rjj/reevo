@@ -1,0 +1,38 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate High-to-Low Range
+    high_low_range = df['high'] - df['low']
+    
+    # Adjust for Volatility
+    volatility = df['close'].rolling(window=10).std()
+    vol_adjusted_high_low = (high_low_range / volatility) / df['close']
+
+    # Moving Average Convergence Divergence (MACD)
+    ema_12 = df['close'].ewm(span=12, adjust=False).mean()
+    ema_26 = df['close'].ewm(span=26, adjust=False).mean()
+    macd_line = ema_12 - ema_26
+    signal_line = macd_line.ewm(span=9, adjust=False).mean()
+
+    # Volume Weighted High-to-Low Range
+    volume_weighted_high_low = high_low_range * df['volume']
+
+    # Price Momentum with Volume
+    price_change = df['close'] - df['close'].shift(1)
+    price_momentum_with_volume = (price_change * df['volume']) / df['close'].shift(1)
+
+    # Combine all the factors into a single DataFrame and sum them up
+    combined_factors = pd.DataFrame({
+        'Vol Adjusted High-to-Low': vol_adjusted_high_low,
+        'MACD Line': macd_line,
+        'Signal Line': signal_line,
+        'Volume Weighted High-to-Low': volume_weighted_high_low,
+        'Price Momentum with Volume': price_momentum_with_volume
+    }).fillna(0)
+
+    alpha_factor = combined_factors.sum(axis=1)
+
+    return alpha_factor
+```

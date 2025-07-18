@@ -1,0 +1,46 @@
+[*] Running ...
+Traceback (most recent call last):
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 60, in <module>
+    mean_ic = solve(market_data)
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 21, in solve
+    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x)).reset_index(level=0, drop=True)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/groupby.py", line 1825, in apply
+    result = self._python_apply_general(f, self._selected_obj)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/groupby.py", line 1886, in _python_apply_general
+    values, mutated = self._grouper.apply_groupwise(f, data, self.axis)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/ops.py", line 919, in apply_groupwise
+    res = f(group)
+          ^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 21, in <lambda>
+    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x)).reset_index(level=0, drop=True)
+                                                                              ^^^^^^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/gpt.py", line 17, in heuristics_v2
+    
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/generic.py", line 6662, in astype
+    new_data = self._mgr.astype(dtype=dtype, copy=copy, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 430, in astype
+    return self.apply(
+           ^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 363, in apply
+    applied = getattr(b, f)(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 784, in astype
+    new_values = astype_array_safe(values, dtype, copy=copy, errors=errors)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 237, in astype_array_safe
+    new_values = astype_array(values, dtype, copy=copy)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 182, in astype_array
+    values = _astype_nansafe(values, dtype, copy=copy)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 101, in _astype_nansafe
+    return _astype_float_to_int_nansafe(arr, dtype, copy)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/dtypes/astype.py", line 145, in _astype_float_to_int_nansafe
+    raise IntCastingNaNError(
+pandas.errors.IntCastingNaNError: Cannot convert non-finite values (NA or inf) to integer

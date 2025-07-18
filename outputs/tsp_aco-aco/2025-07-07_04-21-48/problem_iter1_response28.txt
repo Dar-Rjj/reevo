@@ -1,0 +1,27 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon to the distance matrix
+    epsilon = 1e-8
+    safe_distance = distance_matrix + epsilon
+
+    # Inverse distance as a base factor (closer nodes are more promising)
+    inv_distance = 1.0 / safe_distance
+
+    # Penalize edges to nodes with high degree of already chosen edges
+    # Estimate node degrees across the whole graph as importance factor
+    row_sums = inv_distance.sum(axis=1, keepdims=True)
+    col_sums = inv_distance.sum(axis=0, keepdims=True)
+    node_importance = (row_sums + col_sums) / 2.0
+
+    # Normalize node importance
+    node_importance /= node_importance.max()
+
+    # Combine inverse distance and node importance
+    combined = inv_distance * (1 - node_importance)
+
+    # Sparsify the matrix by zeroing out elements below a threshold percentile
+    threshold = np.percentile(combined, 30)  # Zero out the lowest 30% of the scores
+    combined[combined < threshold] = 0.0
+
+    return combined
+```

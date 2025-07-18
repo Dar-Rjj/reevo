@@ -1,0 +1,20 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Example transformation: Moving average crossover
+    short_window = 5
+    long_window = 20
+    df['short_mavg'] = df['close'].rolling(window=short_window, min_periods=1).mean()
+    df['long_mavg'] = df['close'].rolling(window=long_window, min_periods=1).mean()
+    df['crossover_signal'] = (df['short_mavg'] > df['long_mavg']).astype(int) * 2 - 1
+    
+    # Example transformation: Price momentum
+    df['momentum'] = df['close'].pct_change(periods=12)
+    
+    # Example transformation: Volume adjusted price
+    df['volume_adjusted_close'] = df['close'] * df['volume']
+    
+    # Combine signals into a single factor value
+    heuristics_matrix = df['crossover_signal'] + df['momentum'] + df['volume_adjusted_close'].pct_change()
+    
+    return heuristics_matrix

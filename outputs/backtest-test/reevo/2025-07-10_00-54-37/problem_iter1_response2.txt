@@ -1,0 +1,13 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the 10-day moving average of the closing price
+    df['10_day_ma'] = df.groupby(level='ticker')['close'].transform(lambda x: x.rolling(window=10).mean())
+    
+    # Calculate the percentage change in volume compared to the previous day
+    df['volume_change'] = df.groupby(level='ticker')['volume'].pct_change()
+    
+    # Calculate the factor as a weighted sum of the 10-day moving average and the volume change
+    df['factor'] = (df['10_day_ma'] / df['close']) * (1 + df['volume_change'])
+    
+    return df['factor']
+```

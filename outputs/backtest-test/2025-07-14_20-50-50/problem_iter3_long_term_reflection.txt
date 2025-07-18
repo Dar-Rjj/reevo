@@ -1,0 +1,1 @@
+Integrate price ratios and moving averages, focus on volatility and liquidity, and simplify calculations for clarity. Avoid overcomplicating with volume; sometimes, simpler price-based factors yield clearer, more effective signals.

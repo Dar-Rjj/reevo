@@ -1,0 +1,26 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate Intraday Momentum
+    df['daily_range'] = df['high'] - df['low']
+    df['normalized_daily_range'] = df['daily_range'] / df['close'].shift(1)
+    df['open_to_close_return'] = (df['close'] - df['open']) / df['open']
+    df['intraday_momentum'] = df['normalized_daily_range'] + df['open_to_close_return']
+
+    # Analyze Volume Impact
+    df['vol_10_day_ma'] = df['volume'].rolling(window=10).mean()
+    df['volume_deviation'] = df['volume'] - df['vol_10_day_ma']
+    
+    # Define significant volume increase (e.g., 2x the 10-day moving average)
+    df['significant_volume_increase'] = (df['volume'] > 2 * df['vol_10_day_ma']).astype(int)
+
+    # Combine Factors for Alpha
+    df['weighted_intraday_momentum'] = df['intraday_momentum'] * df['volume']
+    df['alpha_factor'] = df['weighted_intraday_momentum'] * df['significant_volume_increase']
+    
+    # If not a significant volume increase, apply lower weights
+    df['alpha_factor'] += df['weighted_intraday_momentum'] * (1 - df['significant_volume_increase']) * 0.5
+
+    return df['alpha_factor']
+```

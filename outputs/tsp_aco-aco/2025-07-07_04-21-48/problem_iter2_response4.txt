@@ -1,0 +1,38 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    distance_matrix += eps
+
+    # Inverse of distance as base heuristic (favor shorter edges)
+    inv_distance = 1.0 / distance_matrix
+
+    # Compute row-wise and column-wise average distances to capture local density
+    row_avg = np.mean(distance_matrix, axis=1, keepdims=True)
+    col_avg = np.mean(distance_matrix, axis=0, keepdims=True)
+
+    # Density mask: mark entries that are below a weighted average of row and column mean
+    density_mask = distance_matrix < (0.5 * row_avg + 0.5 * col_avg)
+    
+    # Construct the heuristic matrix using both inverse distance and local density
+    combined_heuristic = inv_distance * density_mask.astype(float)
+
+    # Further sparsify by applying a threshold on the combined heuristic values
+    values = combined_heuristic[np.triu_indices_from(combined_heuristic, k=1)]
+    if values.size > 0:
+        threshold = np.percentile(values, 75)
+        combined_heuristic[combined_heuristic < threshold] = 0.0
+
+    # Symmetrize in case of asymmetric input to ensure balance in bidirectional consideration
+    combined_heuristic = (combined_heuristic + combined_heuristic.T) / 2.0
+
+    # Ensure no node is completely isolated by slightly rewarding self-loop avoidance
+    epsilon = 1e-6
+    row_sums = combined_heuristic.sum(axis=1)
+    empty_rows = (row_sums == 0).nonzero()[0]
+    for idx in empty_rows:
+        combined_heuristic[idx, :] += epsilon
+        combined_heuristic[:, idx] += epsilon
+
+    return combined_heuristic
+```

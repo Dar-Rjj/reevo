@@ -1,0 +1,1 @@
+Focus on price ratios and EMAs for trend identification. Incorporate volume-weighted returns and volatility for robustness. Simplify calculations, avoiding overcomplication. Consider market sentiment for added insight.

@@ -1,0 +1,41 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Dynamic lookback window based on volatility regime (shorter in high vol, longer in low vol)
+    volatility = (df['high'] - df['low']) / df['close'].shift(1)
+    avg_volatility = volatility.groupby(level=0).rolling(window=20).mean().droplevel(0)
+    lookback_window = 5 + (15 * (1 - (volatility / avg_volatility).clip(0, 1))).astype(int)
+
+    # Normalized price position with exponential weighting to recent prices
+    def dynamic_ewma(series, window):
+        return series.groupby(level=0, group_keys=False).apply(lambda x: x.ewm(span=window[x.name[0]] if isinstance(window, pd.Series) else window).mean())
+
+    rolling_high = df.groupby(level=0, group_keys=False)['high'].apply(lambda x: x.rolling(window=lookback_window[x.name[0]] if isinstance(lookback_window, pd.Series) else lookback_window))
+    rolling_low = df.groupby(level=0, group_keys=False)['low'].apply(lambda x: x.rolling(window=lookback_window[x.name[0]] if isinstance(lookback_window, pd.Series) else lookback_window))
+    recent_high = rolling_high.max()
+    recent_low = rolling_low.min()
+    normalized_price = (df['close'] - recent_low) / (recent_high - recent_low + 1e-7)
+
+    # Smoothed volume ratio with adaptive baseline and behavioral bias detection
+    volume_ma = df.groupby(level=0, group_keys=False)['volume'].apply(lambda x: x.rolling(window=lookback_window[x.name[0]]).mean())
+    volume_ratio = df['volume'] / (volume_ma + 1e-7)
+    smoothed_volume = volume_ratio.ewm(span=5).mean().clip(0.3, 3.0)
+
+    # Behavioral signal: price-volume divergence (momentum imbalance)
+    close_ret = df['close'].pct_change()
+    volume_ret = df['volume'].pct_change()
+    pv_divergence = (close_ret - volume_ret).ewm(span=5).mean()
+
+    # Regime-aware weighting using volatility and volume stability
+    volatility_signal = 1.0 / ((df['high'] - df['low']) / df['close'].shift(1) + 1e-7)
+    volume_stability = 1.0 / (smoothed_volume.pct_change().abs() + 1e-7)
+    regime_weight = (volatility_signal * 0.6 + volume_stability * 0.4)
+
+    # Composite alpha factor with momentum, behavioral, and liquidity signals
+    alpha = regime_weight * (
+        normalized_price * 0.4 +
+        smoothed_volume * 0.3 +
+        pv_divergence * 0.3
+    )
+
+    return alpha.clip(lower=-1, upper=1)
+```

@@ -1,0 +1,22 @@
+def heuristics_v2(df):
+    # Mean Reversion Signal: Z-score of 10-day return
+    df['ten_day_return'] = df.groupby(level=0)['close'].pct_change(10)
+    df['mean_10d_ret'] = df.groupby(level=0)['ten_day_return'].rolling(window=60).mean().droplevel(0)
+    df['std_10d_ret'] = df.groupby(level=0)['ten_day_return'].rolling(window=60).std().droplevel(0)
+    df['z_score_10d_ret'] = (df['ten_day_return'] - df['mean_10d_ret']) / df['std_10d_ret']
+
+    # Trend Following Indicator: 50-day EMA vs 200-day EMA
+    df['EMA_50'] = df.groupby(level=0)['close'].ewm(span=50, adjust=False).mean()
+    df['EMA_200'] = df.groupby(level=0)['close'].ewm(span=200, adjust=False).mean()
+    df['trend_signal'] = df['EMA_50'] - df['EMA_200']
+
+    # Volume-Weighted Average Price (VWAP) Deviation
+    df['vwap'] = (df['volume'] * df['amount']).cumsum() / df['volume'].cumsum()
+    df['vwap_dev'] = (df['close'] - df['vwap']) / df['close']
+
+    # Composite Alpha Factor
+    df['heuristics_factor'] = df['z_score_10d_ret'] + df['trend_signal'] * df['vwap_dev']
+    
+    heuristics_matrix = df['heuristics_factor']
+
+    return heuristics_matrix

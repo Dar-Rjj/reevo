@@ -1,0 +1,31 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate High-Low Range
+    high_low_range = df['high'] - df['low']
+
+    # Calculate Open-Close Range
+    open_close_range = (df['open'] - df['close']).abs()
+
+    # Combine Ranges and normalize by Close price
+    combined_range = (high_low_range + open_close_range) / df['close']
+
+    # Calculate Daily Log Return
+    daily_log_return = np.log(df['close'] / df['close'].shift(1))
+
+    # Volume Momentum
+    avg_volume_5_days = df['volume'].rolling(window=5).mean()
+    volume_ratio = df['volume'] / avg_volume_5_days
+    volume_momentum = daily_log_return * volume_ratio
+
+    # Final Alpha Factor
+    alpha_factor = combined_range * volume_momentum
+
+    # Subtract Cumulative Average Log Return of the past 5 days
+    avg_log_return_5_days = daily_log_return.rolling(window=5).mean()
+    final_alpha_factor = alpha_factor - avg_log_return_5_days
+
+    return final_alpha_factor
+```

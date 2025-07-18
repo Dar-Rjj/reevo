@@ -1,0 +1,4 @@
+Incorporate more robust statistical measures and dynamic weighting. Consider additional market indicators for diversification.
+Incorporate more adaptive weighting, additional indicators, and consider market regimes for dynamic factor selection.
+Incorporate technical indicators, adjust lookback periods, and balance factor contributions.
+Integrate more market signals, use adaptive weighting, and explore non-linear combinations.

@@ -1,0 +1,38 @@
+def heuristics_v2(df):
+    # Calculate the difference between high and low
+    df['High_Low_Diff'] = df['high'] - df['low']
+    
+    # Calculate the rate of change for the High_Low_Diff
+    df['High_Low_RoC'] = df['High_Low_Diff'].pct_change().rolling(window=5).mean()
+    
+    # Calculate the RSI
+    delta = df['close'].diff(1)
+    gain = (delta.where(delta > 0, 0)).fillna(0)
+    loss = (-delta.where(delta < 0, 0)).fillna(0)
+    avg_gain = gain.rolling(window=14).mean()
+    avg_loss = loss.rolling(window=14).mean()
+    rs = avg_gain / avg_loss
+    df['RSI'] = 100 - (100 / (1 + rs))
+    
+    # Calculate the ATR
+    tr1 = df['high'] - df['low']
+    tr2 = np.abs(df['high'] - df['close'].shift())
+    tr3 = np.abs(df['low'] - df['close'].shift())
+    true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    df['ATR'] = true_range.rolling(window=14).mean()
+    
+    # Normalize the factors
+    df['High_Low_RoC_Norm'] = (df['High_Low_RoC'] - df['High_Low_RoC'].mean()) / df['High_Low_RoC'].std()
+    df['RSI_Norm'] = (df['RSI'] - df['RSI'].mean()) / df['RSI'].std()
+    df['ATR_Norm'] = (df['ATR'] - df['ATR'].mean()) / df['ATR'].std()
+    
+    # Combine the normalized factors into a single heuristics score
+    df['Heuristic_Score'] = df['High_Low_RoC_Norm'] + df['RSI_Norm'] + df['ATR_Norm']
+    
+    # Drop rows with NaN values
+    df.dropna(inplace=True)
+    
+    # Extract the heuristics scores
+    heuristics_matrix = df['Heuristic_Score']
+    
+    return heuristics_matrix

@@ -1,0 +1,15 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Normalize the close price for each ticker over a rolling window
+    df['close_norm'] = df.groupby(level=0)['close'].apply(lambda x: (x - x.rolling(window=20).mean()) / x.rolling(window=20).std())
+    
+    # Calculate the weighted sum of the normalized close prices to generate the heuristic factor
+    weights = [0.5, 0.3, 0.2]  # Example weights for last 3 days
+    for i, weight in enumerate(weights, start=1):
+        df[f'weighted_close_{i}'] = df['close_norm'].shift(i) * weight
+    df['heuristic_factor'] = df.filter(like='weighted_close_').sum(axis=1)
+    
+    # Prepare the output as a series
+    heuristics_matrix = df['heuristic_factor']
+    return heuristics_matrix

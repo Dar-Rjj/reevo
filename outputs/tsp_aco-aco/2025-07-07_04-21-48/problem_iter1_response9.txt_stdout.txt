@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/rjj/reevo/problems/tsp_aco/eval.py", line 10, in <module>
+    import gpt
+  File "/home/rjj/reevo/problems/tsp_aco/gpt.py", line 14
+    threshold = np.quantile(row_norm[row_norm < np.inf]], 0.75)
+                                                       ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '('

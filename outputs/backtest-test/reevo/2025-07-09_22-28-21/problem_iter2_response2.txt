@@ -1,0 +1,18 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Normalize price position within recent high-low range (momentum oscillator)
+    rolling_high = df['high'].rolling(window=20).max()
+    rolling_low = df['low'].rolling(window=20).min()
+    price_position = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # Volume imbalance: current volume relative to recent average
+    volume_ratio = df['volume'] / (df['volume'].rolling(window=20).mean() + 1e-7)
+
+    # Adaptive weight based on inverse volume activity: more weight when volume is low
+    adaptive_weight = 1.0 / (volume_ratio + 1e-7)
+
+    # Composite alpha signal combining price action and volume behavior
+    alpha = adaptive_weight * (price_position - 0.5)
+
+    return alpha.clip(lower=-1, upper=1)
+```

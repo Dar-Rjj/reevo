@@ -1,0 +1,18 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate 14-day Rate of Change (ROC)
+    roc = df['close'].pct_change(periods=14) * 100
+    
+    # Calculate 20-day simple moving average
+    sma_20 = df['close'].rolling(window=20).mean()
+    
+    # Calculate standard deviation over 20 days
+    std_20 = df['close'].rolling(window=20).std(ddof=0)
+    
+    # Calculate Bollinger Band width
+    bollinger_band_width = (df['close'] - sma_20) / (2 * std_20)
+    
+    # Generate the heuristics matrix as the final output
+    heuristics_matrix = (roc + bollinger_band_width) / 2
+    return heuristics_matrix

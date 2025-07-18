@@ -1,0 +1,10 @@
+```python
+def heuristics_v2(df):
+    # Calculate High-to-Low Range
+    high_to_low_range = df['high'] - df['low']
+    
+    # Divide by Close price to get the factor value
+    factor_value = high_to_low_range / df['close']
+    
+    return factor_value
+```

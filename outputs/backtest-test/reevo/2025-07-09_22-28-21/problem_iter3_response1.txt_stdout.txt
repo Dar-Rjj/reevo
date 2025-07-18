@@ -1,0 +1,5 @@
+[*] Running ...
+/home/rjj/reevo/problems/backtest/gpt.py:18: FutureWarning: The default fill_method='pad' in Series.pct_change is deprecated and will be removed in a future version. Either fill in any non-leading NA values prior to calling pct_change or specify 'fill_method=None' to not fill NA values.
+  range_expansion = ((recent_high - recent_low) / (df['close'].shift(1) + 1e-7)).pct_change(periods=10)
+[*] Average:
+-0.004614442884934525

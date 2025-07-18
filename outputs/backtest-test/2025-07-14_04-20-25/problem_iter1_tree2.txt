@@ -1,0 +1,22 @@
+```txt
+High-Low Momentum and Volume Thrust
+├── Calculate High-Low Momentum
+│   ├── Use High price
+│   ├── Use Low price
+│   └── Calculate Momentum Indicator
+│       ├── Compute High-Low Range
+│       └── Smooth with Moving Average
+├── Calculate Volume Thrust
+│   ├── Use Volume
+│   ├── Calculate Volume Moving Average
+│   │   └── Choose a Smoothing Period
+│   └── Compute Volume Ratio
+│       ├── Latest Volume
+│       └── Volume Moving Average
+└── Combine High-Low Momentum and Volume Thrust
+    ├── Multiply High-Low Momentum by Volume Thrust
+    ├── Normalize Factor (if necessary)
+    └── Interpret the Alpha Factor
+        ├── High Positive Values Suggest Strong Upward Momentum
+        └── Low Values Indicate Weak or Negative Momentum
+```

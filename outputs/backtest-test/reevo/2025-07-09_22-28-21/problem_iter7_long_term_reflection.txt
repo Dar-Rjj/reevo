@@ -1,0 +1,1 @@
+Prioritize adaptive normalization and volatility weighting. Use smoothed volume ratios, clipped outliers, and dynamic lookback windows. Blend momentum with behavioral signals. Apply regime-aware weighting for stability and interpretability in alpha factor design.

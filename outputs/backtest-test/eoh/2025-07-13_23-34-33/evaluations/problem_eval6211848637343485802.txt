@@ -1,0 +1,23 @@
+def heuristics_v3(df):
+    # Calculate the 10-period EMA of the closing price
+    ema_close = df['close'].ewm(span=10, adjust=False).mean()
+    
+    # Normalize the EMA of the closing price
+    norm_ema_close = (ema_close - ema_close.mean()) / ema_close.std()
+    
+    # Calculate the ratio of high to low prices
+    high_low_ratio = df['high'] / df['low']
+    
+    # Normalize the high-low ratio
+    norm_high_low_ratio = (high_low_ratio - high_low_ratio.mean()) / high_low_ratio.std()
+    
+    # Calculate the 5-day SMA of the volume
+    sma_volume = df['volume'].rolling(window=5).mean()
+    
+    # Normalize the SMA of the volume
+    norm_sma_volume = (sma_volume - sma_volume.mean()) / sma_volume.std()
+    
+    # Combine the normalized EMA, high-low ratio, and SMA of volume into a single heuristic
+    heuristics_matrix = 0.7 * norm_ema_close + 0.3 * norm_high_low_ratio + norm_sma_volume
+    
+    return heuristics_matrix

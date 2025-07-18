@@ -1,0 +1,35 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday Log Returns
+    open_to_close_log_return = np.log(df['close'] / df['open'])
+    high_to_low_log_range = np.log(df['high'] / df['low'])
+
+    # Compute Volume-Weighted Intraday Momentum
+    volume_ratio = df['volume'] / df['volume'].sum()
+    trade_amount_ratio = df['amount'] / df['amount'].sum()
+    final_weights = (volume_ratio + trade_amount_ratio) / 2
+    weighted_log_returns = (open_to_close_log_return + high_to_low_log_range) * final_weights
+
+    # Apply Smoothing and Trend Indicator
+    ema_weighted_log_returns = weighted_log_returns.ewm(span=12).mean()
+    ema_volume = df['volume'].ewm(span=12).mean()
+    macd = ema_weighted_log_returns.ewm(span=12).mean() - ema_weighted_log_returns.ewm(span=26).mean()
+
+    # Incorporate Granular Intraday Data
+    minute_level_log_returns = np.log(df['close'].pct_change().dropna() + 1)
+    minute_level_volume_ratio = df['volume'].pct_change().dropna() + 1
+    minute_level_weighted_momentum = (minute_level_log_returns * minute_level_volume_ratio).rolling(window=12).mean()
+
+    # Incorporate Volatility Adjustment
+    log_returns_std = weighted_log_returns.std()
+    minute_level_log_returns_std = minute_level_log_returns.std()
+    volatility_adjusted_weighted_sum = weighted_log_returns / (log_returns_std + minute_level_log_returns_std)
+
+    # Final Alpha Factor
+    alpha_factor = (ema_weighted_log_returns + macd + volatility_adjusted_weighted_sum) / 3
+
+    return alpha_factor
+```

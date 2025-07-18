@@ -1,0 +1,26 @@
+[
+     {
+          "algorithm": "The new algorithm, named Heuristics_v3, modifies the original by using a 10-period EMA for the closing price, adjusting the weights of the normalized EMA and high-low ratio to 0.7 and 0.3 respectively, and incorporating a 5-day simple moving average (SMA) of the trading volume as an additional factor to gauge interest and liquidity.",
+          "code": "def heuristics_v3(df):\n    # Calculate the 10-period EMA of the closing price\n    ema_close = df['close'].ewm(span=10, adjust=False).mean()\n    \n    # Normalize the EMA of the closing price\n    norm_ema_close = (ema_close - ema_close.mean()) / ema_close.std()\n    \n    # Calculate the ratio of high to low prices\n    high_low_ratio = df['high'] / df['low']\n    \n    # Normalize the high-low ratio\n    norm_high_low_ratio = (high_low_ratio - high_low_ratio.mean()) / high_low_ratio.std()\n    \n    # Calculate the 5-day SMA of the volume\n    sma_volume = df['volume'].rolling(window=5).mean()\n    \n    # Normalize the SMA of the volume\n    norm_sma_volume = (sma_volume - sma_volume.mean()) / sma_volume.std()\n    \n    # Combine the normalized EMA, high-low ratio, and SMA of volume into a single heuristic\n    heuristics_matrix = 0.7 * norm_ema_close + 0.3 * norm_high_low_ratio + norm_sma_volume\n    \n    return heuristics_matrix",
+          "objective": -0.08367,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The new algorithm, named Heuristics_v3, constructs a factor by normalizing and combining the 10-period EMA of the closing price with the ratio of high to open prices, using a different weighting scheme.",
+          "code": "def heuristics_v3(df):\n    # Calculate the 10-period EMA of the closing price\n    ema_close = df['close'].ewm(span=10, adjust=False).mean()\n    \n    # Normalize the EMA of the closing price\n    norm_ema_close = (ema_close - ema_close.mean()) / ema_close.std()\n    \n    # Calculate the ratio of high to open prices\n    high_open_ratio = df['high'] / df['open']\n    \n    # Normalize the high-open ratio\n    norm_high_open_ratio = (high_open_ratio - high_open_ratio.mean()) / high_open_ratio.std()\n    \n    # Combine the normalized EMA and high-open ratio into a single heuristic\n    heuristics_matrix = 0.7 * norm_ema_close + 0.3 * norm_high_open_ratio\n    \n    return heuristics_matrix",
+          "objective": -0.07486,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The new algorithm, named Heuristics_v2, constructs a factor by normalizing and combining the exponential moving average (EMA) of the closing price with the ratio of high to low prices, aiming to capture both trend following and intraday volatility.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v2(df):\n    # Calculate the 20-period EMA of the closing price\n    ema_close = df['close'].ewm(span=20, adjust=False).mean()\n    \n    # Normalize the EMA of the closing price\n    norm_ema_close = (ema_close - ema_close.mean()) / ema_close.std()\n    \n    # Calculate the ratio of high to low prices\n    high_low_ratio = df['high'] / df['low']\n    \n    # Normalize the high-low ratio\n    norm_high_low_ratio = (high_low_ratio - high_low_ratio.mean()) / high_low_ratio.std()\n    \n    # Combine the normalized EMA and high-low ratio into a single heuristic\n    heuristics_matrix = 0.6 * norm_ema_close + 0.4 * norm_high_low_ratio\n    \n    return heuristics_matrix",
+          "objective": -0.07392,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The modified algorithm, named Heuristics_v3, constructs a factor by integrating the 20-period EMA of closing prices with the average true range (ATR) over 14 periods, aiming to capture both trend and volatility, where each component is normalized and combined in a weighted fashion.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v3(df):\n    # Calculate the 20-period EMA of the closing price\n    ema_close = df['close'].ewm(span=20, adjust=False).mean()\n    \n    # Normalize the EMA of the closing price\n    norm_ema_close = (ema_close - ema_close.mean()) / ema_close.std()\n    \n    # Calculate the True Range\n    tr = df[['high', 'low']].diff().abs().max(axis=1)\n    tr[0] = df.loc[df.index[0], 'high'] - df.loc[df.index[0], 'low']\n    \n    # Calculate the 14-period ATR\n    atr = tr.rolling(window=14).mean()\n    \n    # Normalize the ATR\n    norm_atr = (atr - atr.mean()) / atr.std()\n    \n    # Combine the normalized EMA and ATR into a single heuristic\n    heuristics_matrix = 0.7 * norm_ema_close + 0.3 * norm_atr\n    \n    return heuristics_matrix",
+          "objective": -0.0688,
+          "other_inf": null
+     }
+]

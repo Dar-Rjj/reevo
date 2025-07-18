@@ -1,0 +1,64 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic alpha factor combining multiple regime-adaptive components:
+    - Adaptive lookback momentum based on volatility regime
+    - Volume-weighted price divergence to detect hidden strength/weakness
+    - Rank-based normalization with outlier clipping
+    - Interpretability through signal decomposition
+
+    Factor Interpretation:
+    - Positive values indicate undervalued momentum with volume confirmation
+    - Negative values suggest overextended or divergent behavior
+    """
+    
+    # 1. Volatility Regime Detection (adaptive window selector)
+    returns = df['close'].pct_change()
+    vol_window_fast = 5
+    vol_window_slow = 20
+    
+    fast_vol = returns.groupby(level=0).rolling(vol_window_fast).std().droplevel(0)
+    slow_vol = returns.groupby(level=0).rolling(vol_window_slow).std().droplevel(0)
+    
+    vol_regime = fast_vol / slow_vol.replace(0, 1e-6)
+    adaptive_lookback = (vol_window_slow - vol_window_fast) * vol_regime + vol_window_fast
+    adaptive_lookback = adaptive_lookback.clip(3, 20).round().astype(int)
+
+    # 2. Volume-weighted Price Divergence (momentum vs. volume trend)
+    def rolling_with_variable_window(series, window):
+        return series.groupby(level=0).apply(
+            lambda x: x.reset_index(drop=True).rolling(window=max(2, window.mean())).mean()
+        ).droplevel(0)
+    
+    close_diff = df['close'] - df['close'].shift(1)
+    volume_diff = df['volume'] - df['volume'].shift(1)
+    
+    # Momentum of price changes
+    momentum = close_diff.groupby(level=0).rolling(5).sum().droplevel(0)
+    
+    # Trend in volume changes (normalized)
+    avg_volume = df['volume'].groupby(level=0).rolling(10).mean().droplevel(0)
+    volume_trend = (df['volume'] - avg_volume) / avg_volume.clip(lower=1e-6)
+    
+    # Hidden divergence: positive momentum with decreasing volume suggests weakness
+    divergence = momentum * volume_trend
+
+    # 3. Adaptive Normalization using rank and volatility scaling
+    def regime_aware_normalization(signal):
+        signal_rank = signal.groupby(level=1).rank(pct=True)
+        signal_vol_adj = signal / signal.groupby(level=0).rolling(10).std().droplevel(0).clip(lower=1e-6)
+        return 0.5 * signal_rank + 0.5 * signal_vol_adj.rank(pct=True)
+    
+    # Apply to each component
+    mom_signal = regime_aware_normalization(momentum)
+    div_signal = regime_aware_normalization(divergence)
+    
+    # Final combined factor
+    # Weights: 50% momentum, 50% divergence detection
+    combined_factor = (
+        0.5 * (mom_signal if mom_signal.mean() > 0 else -mom_signal) +
+        0.5 * (1 - div_signal if div_signal.mean() < 0 else div_signal)
+    )
+    
+    return combined_factor.fillna(0).clip(-3, 3)
+```

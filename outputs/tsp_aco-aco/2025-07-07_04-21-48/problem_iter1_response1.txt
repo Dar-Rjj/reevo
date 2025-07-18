@@ -1,0 +1,31 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon to the distance matrix
+    epsilon = 1e-8
+    safe_distance = distance_matrix + epsilon
+
+    # Inverse of distance as base heuristic (favor shorter edges)
+    inv_distance = 1.0 / safe_distance
+
+    # Compute node degrees based on thresholded adjacency (k-nearest neighbors)
+    num_nodes = distance_matrix.shape[0]
+    k = max(2, int(num_nodes * 0.1))  # pick top 10% nearest neighbors or at least 2
+    knn_mask = np.zeros_like(distance_matrix, dtype=bool)
+    for i in range(num_nodes):
+        nearest_indices = np.argsort(distance_matrix[i])[:k]
+        knn_mask[i, nearest_indices] = True
+
+    # Promote edges that are mutual neighbors (i.e., if j is close to i and i is close to j)
+    mutual_mask = np.logical_and(knn_mask, knn_mask.T)
+
+    # Combine multiple factors:
+    # - Inverse distance as main component
+    # - Sparsify using KNN mask (only consider local neighborhood)
+    # - Enhance weights for mutual neighbors
+    combined_heuristic = inv_distance * knn_mask * (1 + mutual_mask * 0.5)
+
+    # Zero out non-promising edges outside of the sparsified graph
+    combined_heuristic *= (combined_heuristic > 0)
+
+    return combined_heuristic
+```

@@ -1,0 +1,32 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    def RSI(series, period=14):
+        delta = series.diff(1)
+        gain = (delta.where(delta > 0, 0)).fillna(0)
+        loss = (-delta.where(delta < 0, 0)).fillna(0)
+        avg_gain = gain.rolling(window=period).mean()
+        avg_loss = loss.rolling(window=period).mean()
+        rs = avg_gain / avg_loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi.fillna(0)
+
+    def PPO(line, fast=12, slow=26, signal=9):
+        ema_fast = line.ewm(span=fast, adjust=False).mean()
+        ema_slow = line.ewm(span=slow, adjust=False).mean()
+        ppo = 100 * (ema_fast - ema_slow) / ema_slow
+        return ppo.fillna(0)
+    
+    close_prices = df['close']
+    volumes = df['volume']
+
+    rsi_values = RSI(close_prices)
+    ppo_values = PPO(close_prices)
+
+    # Volume trend as a simple moving average
+    volume_trend = volumes.rolling(window=30).mean() / volumes.rolling(window=60).mean()
+
+    # Combine RSI, PPO with volume trend
+    heuristics_matrix = (rsi_values * 0.5 + ppo_values * 0.5) * volume_trend
+
+    return heuristics_matrix

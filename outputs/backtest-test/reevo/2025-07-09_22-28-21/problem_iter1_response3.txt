@@ -1,0 +1,24 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Compute the price momentum with adaptive time sensitivity
+    momentum_window = 10
+    price_mom = df['close'].pct_change(momentum_window)
+
+    # Compute normalized volatility using high-low range
+    volatility = (df['high'] - df['low']) / (df['close'].rolling(window=20).mean() + 1e-7)
+
+    # Volume surge detection: how current volume deviates from recent average
+    volume_ma = df['volume'].rolling(window=20).mean()
+    volume_surge = (df['volume'] - volume_ma) / (volume_ma + 1e-7)
+
+    # Price reversal indicator based on open-close relation to prior close
+    price_reversal = (df['close'] - df['open']) / (df['high'] - df['low'] + 1e-7)
+
+    # Adaptive weight based on inverse volatility: higher weight when volatility is low
+    adaptive_weight = 1.0 / (volatility + 1e-7)
+
+    # Composite alpha signal combining all elements
+    alpha = adaptive_weight * (price_reversal + 0.5 * volume_surge - 0.3 * price_mom)
+
+    return alpha.clip(lower=-1, upper=1)
+```

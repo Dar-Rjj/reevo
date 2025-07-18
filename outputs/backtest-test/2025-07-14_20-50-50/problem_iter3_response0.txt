@@ -1,0 +1,37 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate High-to-Low Range Over Close
+    high_to_low_range_over_close = (df['high'] - df['low']) / df['close']
+    
+    # Calculate Price Momentum
+    price_difference = df['close'].diff()
+    price_momentum = price_difference / df['close'].shift(1)
+    
+    # Calculate Moving Average Crossover
+    short_term_ma = df['close'].rolling(window=5).mean()
+    long_term_ma = df['close'].rolling(window=20).mean()
+    moving_average_crossover = short_term_ma - long_term_ma
+    
+    # Calculate Volatility
+    daily_returns = df['close'].pct_change()
+    volatility = daily_returns.rolling(window=20).std()
+    
+    # Calculate Liquidity
+    price_volume_ratio = df['close'] / df['volume']
+
+    # Combine all factors into a single DataFrame
+    factors = pd.DataFrame({
+        'High_to_Low_Range_Over_Close': high_to_low_range_over_close,
+        'Price_Momentum': price_momentum,
+        'Moving_Average_Crossover': moving_average_crossover,
+        'Volatility': volatility,
+        'Liquidity': price_volume_ratio
+    })
+    
+    # Generate the final alpha factor by summing up all individual factors
+    alpha_factor = factors.sum(axis=1)
+    
+    return alpha_factor
+```

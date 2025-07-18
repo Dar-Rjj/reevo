@@ -1,0 +1,4 @@
+Focus on adaptive weighting, normalize inputs, cap outliers, and combine price/volume dynamics with volatility adjustments.
+Focus on simplicity, normalization, and adaptive weighting. Use rolling windows, momentum, volume ratios, and regime detection for robust, interpretable alphas.
+Focus on dynamic normalization, adaptive weighting, regime-aware components, and robustness to outliers and instability.
+Incorporate volatility weighting, normalize signals, clip outliers, use dynamic lookback windows, and blend momentum with volume anomalies for robust alpha factors.

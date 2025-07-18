@@ -1,0 +1,17 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    def true_range(data):
+        high_low = data['high'] - data['low']
+        high_close_prev = (data['high'] - data['close'].shift(1)).abs()
+        low_close_prev = (data['low'] - data['close'].shift(1)).abs()
+        return pd.concat([high_low, high_close_prev, low_close_prev], axis=1).max(axis=1)
+    
+    tr = true_range(df)
+    short_ma_tr = tr.rolling(window=5).mean()
+    long_ma_tr = tr.rolling(window=20).mean()
+    tr_diff = short_ma_tr - long_ma_tr
+    close_momentum = df['close'].pct_change(periods=7)
+    close_momentum_normalized = (close_momentum - close_momentum.mean()) / close_momentum.std()
+    heuristics_matrix = (tr_diff * close_momentum_normalized).fillna(0)
+    return heuristics_matrix

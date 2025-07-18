@@ -1,0 +1,10 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the daily price change
+    df['price_change'] = df['close'] - df['open']
+    # Compute the 5-day moving average of volume
+    df['volume_5d_avg'] = df.groupby('ticker')['volume'].rolling(window=5).mean().reset_index(0, drop=True)
+    # Generate the heuristic factor
+    heuristics_matrix = df['price_change'] / df['volume_5d_avg']
+    return heuristics_matrix

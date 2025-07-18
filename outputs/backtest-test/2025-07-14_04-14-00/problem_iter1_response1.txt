@@ -1,0 +1,21 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate Intraday Price Movement
+    intraday_movement = df['high'] - df['low']
+    
+    # Calculate Relative Open-Close Position
+    open_close_position = (df['close'] - df['open']) / intraday_movement
+    
+    # Calculate Volume Momentum
+    volume_momentum = df['volume'] - df['volume'].shift(1)
+    
+    # Scale by Intraday Price Movement
+    scaled_volume_momentum = volume_momentum * intraday_movement
+    
+    # Final Alpha Factor
+    alpha_factor = open_close_position + scaled_volume_momentum
+    
+    return alpha_factor
+```

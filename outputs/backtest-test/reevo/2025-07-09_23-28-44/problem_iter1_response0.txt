@@ -1,0 +1,31 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the relative strength index (RSI) over a short lookback window
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    lookback = 7  # Short-term RSI
+    avg_gain = gain.groupby(level=0).rolling(window=lookback).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(window=lookback).mean().droplevel(0)
+    
+    rs = avg_gain / avg_loss.replace(0, 1e-6)  # Avoid division by zero
+    rsi = 100 - (100 / (1 + rs))
+    
+    # Momentum factor: normalized difference between current close and past close
+    momentum_window = 5
+    momentum = (df['close'] - df['close'].shift(momentum_window)) / (df['close'].shift(momentum_window) + 1e-7)
+    
+    # Volatility factor: rolling standard deviation of returns
+    returns = df['close'].pct_change()
+    volatility_window = 10
+    volatility = returns.groupby(level=0).rolling(volatility_window).std().droplevel(0)
+    
+    # Combine RSI, Momentum, and Volatility into a single interpretable factor
+    # Weights can be tuned; here we use equal weights for simplicity
+    combined_factor = (0.3 * (1 - rsi.rank() / rsi.rank().max())) + \
+                      (0.4 * momentum.rank()) - \
+                      (0.3 * volatility.rank())
+    
+    return combined_factor.fillna(0)
+```

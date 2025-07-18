@@ -1,0 +1,27 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    epsilon = 1e-8
+    distance_matrix += epsilon
+
+    # Inverse of distance as a base heuristic (favor shorter edges)
+    inv_dist = 1 / distance_matrix
+
+    # Normalize row-wise to emphasize relative edge costs within local neighborhoods
+    row_sums = inv_dist.sum(axis=1, keepdims=True)
+    normalized_inv_dist = inv_dist / (row_sums + epsilon)
+
+    # Penalize edges that are much longer than the average for their respective rows
+    row_means = distance_matrix.mean(axis=1, keepdims=True)
+    penalty = np.where(distance_matrix > 2 * row_means, 0.1, 1.0)
+
+    # Combine heuristics
+    combined_heuristic = normalized_inv_dist * penalty
+
+    # Sparsify by zeroing out edges with very low values (below 10% of max in row)
+    row_max = combined_heuristic.max(axis=1, keepdims=True)
+    sparsity_mask = combined_heuristic < 0.1 * row_max
+    combined_heuristic[sparsity_mask] = 0.0
+
+    return combined_heuristic
+```

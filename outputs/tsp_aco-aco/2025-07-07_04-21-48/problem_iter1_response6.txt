@@ -1,0 +1,29 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a tiny epsilon to distances
+    epsilon = 1e-8
+    safe_distance = distance_matrix + epsilon
+
+    # Inverse distance as base heuristic (favor shorter edges)
+    inv_dist_heuristic = 1.0 / safe_distance
+
+    # Compute the average distance of each row (city), to normalize by local density
+    row_avg = np.mean(safe_distance, axis=1, keepdims=True)
+    col_avg = np.mean(safe_distance, axis=0, keepdims=True)
+    
+    # Normalize distance by relative expected value in row and column
+    relative_row_cost = safe_distance / row_avg
+    relative_col_cost = safe_distance / col_avg
+    
+    # Penalize edges that are more expensive than average for both their row and column
+    relative_heuristic = 1.0 / (relative_row_cost + relative_col_cost)
+
+    # Combine inverse distance with relative cost heuristic
+    combined = inv_dist_heuristic * relative_heuristic
+
+    # Sparsify: set all elements above 75th percentile to zero (discourage long-range connections)
+    threshold = np.percentile(combined, 75)
+    combined[combined < threshold] = 0.0
+
+    return combined
+```

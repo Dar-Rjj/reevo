@@ -1,0 +1,24 @@
+import pandas as pd
+import numpy as np
+
+def heuristics_v3(df):
+    # Calculate the 20-period EMA of the closing price
+    ema_close = df['close'].ewm(span=20, adjust=False).mean()
+    
+    # Normalize the EMA of the closing price
+    norm_ema_close = (ema_close - ema_close.mean()) / ema_close.std()
+    
+    # Calculate the True Range
+    tr = df[['high', 'low']].diff().abs().max(axis=1)
+    tr[0] = df.loc[df.index[0], 'high'] - df.loc[df.index[0], 'low']
+    
+    # Calculate the 14-period ATR
+    atr = tr.rolling(window=14).mean()
+    
+    # Normalize the ATR
+    norm_atr = (atr - atr.mean()) / atr.std()
+    
+    # Combine the normalized EMA and ATR into a single heuristic
+    heuristics_matrix = 0.7 * norm_ema_close + 0.3 * norm_atr
+    
+    return heuristics_matrix

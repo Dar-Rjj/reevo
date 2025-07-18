@@ -1,0 +1,26 @@
+[
+     {
+          "algorithm": "The algorithm leverages a combination of technical indicators and statistical measures to compute a unique alpha factor, which is achieved by first calculating the relative strength index (RSI) and then combining it with the percentage price oscillator (PPO) through a weighted sum adjusted by volume trends.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    def RSI(series, period=14):\n        delta = series.diff(1)\n        gain = (delta.where(delta > 0, 0)).fillna(0)\n        loss = (-delta.where(delta < 0, 0)).fillna(0)\n        avg_gain = gain.rolling(window=period).mean()\n        avg_loss = loss.rolling(window=period).mean()\n        rs = avg_gain / avg_loss\n        rsi = 100 - (100 / (1 + rs))\n        return rsi.fillna(0)\n\n    def PPO(line, fast=12, slow=26, signal=9):\n        ema_fast = line.ewm(span=fast, adjust=False).mean()\n        ema_slow = line.ewm(span=slow, adjust=False).mean()\n        ppo = 100 * (ema_fast - ema_slow) / ema_slow\n        return ppo.fillna(0)\n    \n    close_prices = df['close']\n    volumes = df['volume']\n\n    rsi_values = RSI(close_prices)\n    ppo_values = PPO(close_prices)\n\n    # Volume trend as a simple moving average\n    volume_trend = volumes.rolling(window=30).mean() / volumes.rolling(window=60).mean()\n\n    # Combine RSI, PPO with volume trend\n    heuristics_matrix = (rsi_values * 0.5 + ppo_values * 0.5) * volume_trend\n\n    return heuristics_matrix",
+          "objective": -0.03235,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The new algorithm, named Heuristics_v2, calculates a factor by integrating the momentum of closing prices with the relative strength of volume and amount over a specified period, aiming to capture both price trend and trading intensity for predicting future stock returns.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    # Calculate the momentum of closing prices\n    close_momentum = df['close'].pct_change(periods=20)\n    \n    # Calculate the relative strength of volume\n    volume_strength = (df['volume'] - df['volume'].rolling(window=20).mean()) / df['volume'].rolling(window=20).std()\n    \n    # Calculate the relative strength of amount\n    amount_strength = (df['amount'] - df['amount'].rolling(window=20).mean()) / df['amount'].rolling(window=20).std()\n    \n    # Combine all factors into a single heuristic\n    heuristics_matrix = 0.5 * close_momentum + 0.25 * volume_strength + 0.25 * amount_strength\n    \n    return heuristics_matrix",
+          "objective": -0.01012,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm involves generating a series of heuristic-based alpha factors by combining and transforming the market features to identify patterns that may predict future stock returns.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    # Example transformation: Moving average crossover\n    short_window = 5\n    long_window = 20\n    df['short_mavg'] = df['close'].rolling(window=short_window, min_periods=1).mean()\n    df['long_mavg'] = df['close'].rolling(window=long_window, min_periods=1).mean()\n    df['crossover_signal'] = (df['short_mavg'] > df['long_mavg']).astype(int) * 2 - 1\n    \n    # Example transformation: Price momentum\n    df['momentum'] = df['close'].pct_change(periods=12)\n    \n    # Example transformation: Volume adjusted price\n    df['volume_adjusted_close'] = df['close'] * df['volume']\n    \n    # Combine signals into a single factor value\n    heuristics_matrix = df['crossover_signal'] + df['momentum'] + df['volume_adjusted_close'].pct_change()\n    \n    return heuristics_matrix",
+          "objective": -0.01007,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm identifies unique patterns in market features through a combination of statistical and machine learning techniques, synthesizing these into a heuristic matrix that aims to predict future stock returns.",
+          "code": "import pandas as pd\nimport numpy as np\nfrom sklearn.decomposition import PCA\nfrom sklearn.preprocessing import StandardScaler\n\ndef heuristics_v2(df):\n    # Fill NA values with the method suitable for financial data (e.g., forward fill)\n    df_filled = df.fillna(method='ffill').fillna(method='bfill')\n    \n    # Standardize the dataframe\n    scaler = StandardScaler()\n    scaled_features = scaler.fit_transform(df_filled)\n    \n    # Apply PCA for dimensionality reduction while retaining interpretable factors\n    pca = PCA(n_components=0.95)  # Retain 95% of variance\n    principalComponents = pca.fit_transform(scaled_features)\n    \n    # Construct the heuristic matrix by calculating the cumulative return of each PC\n    heuristics_matrix = pd.DataFrame(principalComponents, index=df.index)\n    heuristics_matrix = heuristics_matrix.pct_change().cumsum().iloc[:, 0]  # Use first PC as the alpha factor\n    \n    return heuristics_matrix",
+          "objective": Infinity,
+          "other_inf": null
+     }
+]

@@ -1,0 +1,28 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate RSI
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    
+    # Calculate Z-Score of RSI
+    rsi_zscore = (rsi - rsi.rolling(window=14).mean()) / rsi.rolling(window=14).std()
+    
+    # Calculate the ratio of the upper shadow to the body
+    upper_shadow = df['high'] - np.maximum(df['open'], df['close'])
+    body = np.abs(df['close'] - df['open'])
+    upper_to_body_ratio = upper_shadow / body
+    
+    # Combine factors into a single heuristics score
+    df['Heuristic_Score'] = (rsi_zscore + upper_to_body_ratio)
+    
+    # Drop rows with NaN values
+    df.dropna(inplace=True)
+    
+    # Extract the heuristics scores
+    heuristics_matrix = df['Heuristic_Score']
+    
+    return heuristics_matrix

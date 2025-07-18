@@ -1,0 +1,48 @@
+```txt
+High-to-Low Range Over Close
+├── Calculate High-to-Low Range
+│   ├── Use High price
+│   └── Use Low price
+└── Divide by Close price
+    ├── Use Close price
+    └── Perform division
+
+Price Momentum
+├── Calculate Price Difference
+│   ├── Use Current Close price
+│   └── Use Previous Close price
+└── Divide by Previous Close price
+    ├── Use Previous Close price
+    └── Perform division
+
+Moving Average Crossover
+├── Calculate Short-term Moving Average
+│   ├── Use Close prices over short period
+│   └── Compute moving average
+├── Calculate Long-term Moving Average
+│   ├── Use Close prices over long period
+│   └── Compute moving average
+└── Calculate Crossover Signal
+    ├── Subtract Short-term Moving Average from Long-term Moving Average
+    ├── Use Short-term Moving Average
+    └── Use Long-term Moving Average
+
+Volatility
+├── Calculate Daily Returns
+│   ├── Use Close prices
+│   └── Compute daily returns
+├── Calculate Standard Deviation of Daily Returns
+│   ├── Use Daily Returns
+│   └── Compute standard deviation
+└── Use as Volatility Measure
+    ├── Use Standard Deviation
+    └── Interpret as volatility
+
+Liquidity
+├── Calculate Price Volume Ratio
+│   ├── Use Close price
+│   └── Use Volume
+└── Interpret as Liquidity Measure
+    ├── Use Price Volume Ratio
+    └── Interpret as liquidity
+```

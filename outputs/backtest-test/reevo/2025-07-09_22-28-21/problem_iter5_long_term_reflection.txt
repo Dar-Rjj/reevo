@@ -1,0 +1,1 @@
+Focus on normalized price extremes within adaptive ranges, confirmed by smoothed volume ratios. Blend momentum and behavioral signals with volatility-weighted features. Use regime detection to dynamically adjust weights, ensuring simplicity, stability, and economic interpretability in alpha factor design.

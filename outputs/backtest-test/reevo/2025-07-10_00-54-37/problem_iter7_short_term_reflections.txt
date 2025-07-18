@@ -1,0 +1,4 @@
+Incorporate adaptive weighting, non-linear combinations, and additional market indicators for enhanced factor performance.
+Incorporate more sophisticated technical indicators and dynamically adjust weights based on market conditions.
+Simplify, use longer lookbacks, balance factors, and avoid over-complex weighting.
+Simplify combinations, use equal weighting, and avoid overfitting with adaptive regimes.

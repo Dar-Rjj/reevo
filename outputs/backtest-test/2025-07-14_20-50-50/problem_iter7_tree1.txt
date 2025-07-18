@@ -1,0 +1,46 @@
+```txt
+Volatility Adjusted High-to-Low Range Over Close
+├── Calculate High-to-Low Range
+│   ├── Use High price
+│   └── Use Low price
+└── Adjust for Volatility
+    ├── Calculate Volatility
+    │   ├── Use Close prices
+    │   └── Calculate Standard Deviation
+    ├── Divide High-to-Low Range by Volatility
+    └── Divide by Close Price
+        ├── Use Close price
+        └── Perform division
+
+Moving Average Convergence Divergence (MACD)
+├── Calculate Short-Term EMA
+│   ├── Use Close prices
+│   └── Set period to 12
+├── Calculate Long-Term EMA
+│   ├── Use Close prices
+│   └── Set period to 26
+├── Calculate MACD Line
+│   ├── Subtract Long-Term EMA from Short-Term EMA
+└── Calculate Signal Line
+    ├── Use MACD Line
+    └── Calculate 9-period EMA
+
+Volume Weighted High-to-Low Range
+├── Calculate High-to-Low Range
+│   ├── Use High price
+│   └── Use Low price
+└── Multiply by Volume
+    ├── Use Volume
+    └── Perform multiplication
+
+Price Momentum with Volume
+├── Calculate Price Change
+│   ├── Use Close price
+│   └── Subtract Previous Close
+├── Multiply by Volume
+│   ├── Use Volume
+│   └── Perform multiplication
+└── Divide by Previous Close
+    ├── Use Previous Close
+    └── Perform division
+```

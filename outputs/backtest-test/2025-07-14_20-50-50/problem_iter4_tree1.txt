@@ -1,0 +1,65 @@
+```txt
+High-to-Low Range Over Close
+├── Calculate High-to-Low Range
+│   ├── Use High price
+│   └── Use Low price
+└── Divide by Close price
+    ├── Use Close price
+    └── Perform division
+
+Price Momentum
+├── Calculate Price Difference
+│   ├── Use Current Close price
+│   └── Use Previous Close price
+└── Divide by Previous Close price
+    ├── Use Previous Close price
+    └── Perform division
+
+Enhanced Moving Average Crossover
+├── Calculate Short-term Moving Average
+│   ├── Use Close prices over short period
+│   └── Compute moving average
+├── Calculate Long-term Moving Average
+│   ├── Use Close prices over long period
+│   └── Compute moving average
+├── Calculate Crossover Signal
+│   ├── Subtract Short-term Moving Average from Long-term Moving Average
+│   ├── Use Short-term Moving Average
+│   └── Use Long-term Moving Average
+└── Calculate Crossover Slope
+    ├── Compute the slope of the Crossover Signal over a recent period
+    └── Interpret as trend strength
+
+Volatility
+├── Calculate Daily Returns
+│   ├── Use Close prices
+│   └── Compute daily returns
+├── Calculate Standard Deviation of Daily Returns
+│   ├── Use Daily Returns
+│   └── Compute standard deviation
+└── Use as Volatility Measure
+    ├── Use Standard Deviation
+    └── Interpret as volatility
+
+Enhanced Liquidity
+├── Calculate Price Volume Ratio
+│   ├── Use Close price
+│   └── Use Volume
+├── Calculate Average Price Volume Ratio
+│   ├── Use Price Volume Ratios over a recent period
+│   └── Compute average
+└── Interpret as Liquidity Measure
+    ├── Use Price Volume Ratio and Average Price Volume Ratio
+    └── Interpret as liquidity
+
+Market Sentiment
+├── Calculate Positive Day Count
+│   ├── Count days with positive daily returns
+│   └── For a recent period
+├── Calculate Negative Day Count
+│   ├── Count days with negative daily returns
+│   └── For a recent period
+└── Calculate Sentiment Score
+    ├── Subtract Negative Day Count from Positive Day Count
+    └── Use Positive Day Count and Negative Day Count
+```

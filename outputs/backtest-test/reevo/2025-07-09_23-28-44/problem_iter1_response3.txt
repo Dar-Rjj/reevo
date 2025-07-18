@@ -1,0 +1,26 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Compute price momentum with adaptive lookback based on volatility
+    returns = df['close'].pct_change()
+    volatility = returns.rolling(window=20).std()
+    
+    # Dynamic window momentum: higher volatility shortens lookback
+    adaptive_window = (20 * (1 - volatility)).clip(lower=5)
+    dynamic_momentum = df['close'].pct_change(periods=(adaptive_window.shift(1)).astype(int))
+    
+    # Volume-weighted recent price change
+    volume_weight = df['volume'] / df.groupby(level='ticker')['volume'].rolling(window=10).mean().values
+    recent_price_strength = df['close'].pct_change() * volume_weight
+    
+    # Mean reversion component - 5-day z-score of close relative to past 30 days
+    z_score = (df['close'] - df.groupby(level='ticker')['close'].rolling(window=30).mean()) / df.groupby(level='ticker')['close'].rolling(window=30).std()
+    
+    # Composite alpha factor combining momentum, mean reversion, and recent strength
+    alpha_factor = (
+        0.4 * dynamic_momentum +
+        0.3 * recent_price_strength +
+        0.3 * (-z_score)
+    )
+    
+    return alpha_factor
+```

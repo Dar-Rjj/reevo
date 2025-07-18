@@ -1,0 +1,4 @@
+Incorporate volatility, use log returns, and apply EMA for smoothing and volume-weighted adjustments.
+Incorporate weighted log returns, use volume for weights, and apply EMA for smoothing and standard deviation for adjustment.
+Incorporate volatility, use multiple time frames, and integrate market sentiment for more robust alpha factor generation.
+Incorporate intraday price movements, volume-weighted returns, and volatility adjustments for more robust alpha factors.

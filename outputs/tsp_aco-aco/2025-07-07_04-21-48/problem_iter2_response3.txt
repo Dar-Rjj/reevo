@@ -1,0 +1,28 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    dist = distance_matrix + eps
+
+    # Base heuristic: inverse of distance (favor shorter edges)
+    inv_dist = 1.0 / dist
+
+    # Local importance: normalize each row to represent probability distribution over outgoing edges
+    local_pref = inv_dist / inv_dist.sum(axis=1, keepdims=True)
+
+    # Global importance: prioritize edges that are short and globally competitive
+    global_pref = inv_dist / inv_dist.sum()
+
+    # Combine local and global preferences with power scaling for emphasis
+    local_power = 0.4
+    global_power = 1.6
+    combined = (local_pref ** local_power) * (global_pref ** global_power)
+
+    # Adaptive sparsification: remove edges below a fraction of the max value per row
+    threshold_factor = 0.05  # Tunable parameter for sparsity control
+    row_max = combined.max(axis=1, keepdims=True)
+    mask = combined < (threshold_factor * row_max)
+    combined[mask] = 0.0
+
+    return combined
+```

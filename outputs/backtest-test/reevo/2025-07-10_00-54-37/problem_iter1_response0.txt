@@ -1,0 +1,16 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the normalized trading volume
+    normalized_volume = (df['volume'] - df['volume'].mean()) / df['volume'].std()
+    
+    # Calculate the price change ratio
+    price_change_ratio = (df['close'] - df['open']) / (df['high'] - df['low'] + 1e-7)
+    
+    # Calculate the amount-weighted average price
+    amount_weighted_price = (df['amount'] * (df['high'] + df['low'] + df['close']) / 3) / (df['volume'] + 1e-7)
+    
+    # Combine the factors into a single alpha factor
+    alpha_factor = (price_change_ratio * normalized_volume + amount_weighted_price) / 2
+    
+    return alpha_factor
+```

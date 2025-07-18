@@ -1,0 +1,7 @@
+[*] Running ...
+/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/numpy/_core/_methods.py:52: RuntimeWarning: invalid value encountered in reduce
+  return umr_sum(a, axis, dtype, out, keepdims, initial, where)
+/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/nanops.py:1016: RuntimeWarning: invalid value encountered in subtract
+  sqr = _ensure_numeric((avg - values) ** 2)
+[*] Average:
+0.0057531329876298505

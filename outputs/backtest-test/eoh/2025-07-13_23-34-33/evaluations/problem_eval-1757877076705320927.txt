@@ -1,0 +1,23 @@
+import pandas as pd
+import numpy as np
+from arch import arch_model
+
+def heuristics_v2(df):
+    # Calculate log returns
+    log_returns = np.log(df['close']).diff().dropna()
+    
+    # Fit GARCH(1,1) model
+    garch_model = arch_model(log_returns, vol='Garch', p=1, q=1, dist='Normal')
+    garch_results = garch_model.fit(disp='off')
+    conditional_volatility = garch_results.conditional_volatility
+    
+    # Calculate momentum signal
+    momentum_signal = df['close'].pct_change(periods=60).dropna()
+    
+    # Align indices
+    conditional_volatility, momentum_signal = conditional_volatility.align(momentum_signal, join='inner')
+    
+    # Combine GARCH and Momentum signals
+    heuristics_matrix = (conditional_volatility * 0.5 + momentum_signal * 0.5)
+    
+    return heuristics_matrix

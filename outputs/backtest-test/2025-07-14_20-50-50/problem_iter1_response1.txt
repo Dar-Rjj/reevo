@@ -1,0 +1,21 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    """
+    Calculate the high-to-low range over close price as a novel alpha factor.
+    
+    Parameters:
+    - df (pd.DataFrame): A DataFrame with columns ['open', 'high', 'low', 'close', 'amount', 'volume'] and index as date.
+    
+    Returns:
+    - pd.Series: A Series indexed by date representing the calculated factor values.
+    """
+    # Calculate the High-to-Low Range
+    high_to_low_range = df['high'] - df['low']
+    
+    # Divide the range by the Close price
+    factor_values = high_to_low_range / df['close']
+    
+    return factor_values
+```

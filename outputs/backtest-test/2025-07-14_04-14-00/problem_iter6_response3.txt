@@ -1,0 +1,35 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday Volatility
+    df['HighLowRange'] = df['high'] - df['low']
+    df['TrueRange'] = np.maximum(
+        np.maximum(df['high'] - df['close'].shift(1), df['close'].shift(1) - df['low']),
+        df['high'] - df['low']
+    )
+    
+    # Construct Intraday Price Momentum
+    df['IntradayReturn'] = (df['close'] - df['open']) / df['open']
+    df['EMA_5'] = df['IntradayReturn'].ewm(span=5, adjust=False).mean()
+    df['EMA_10'] = df['IntradayReturn'].ewm(span=10, adjust=False).mean()
+    
+    # Measure Trading Activity
+    df['VolumeRatio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+    df['DollarVolume'] = df['volume'] * df['close']
+    df['TypicalPrice'] = (df['high'] + df['low'] + df['close']) / 3
+    df['VolumeWeightedPriceMovement'] = df['TypicalPrice'] * df['volume']
+    
+    # Combine all the factors into a single alpha factor
+    df['AlphaFactor'] = (
+        df['TrueRange'] + 
+        df['EMA_5'] + 
+        df['EMA_10'] + 
+        df['VolumeRatio'] + 
+        df['DollarVolume'] + 
+        df['VolumeWeightedPriceMovement']
+    )
+    
+    return df['AlphaFactor']
+```

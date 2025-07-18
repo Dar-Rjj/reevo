@@ -1,0 +1,14 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Normalize price action within recent trading range (high-low)
+    recent_high = df['high'].rolling(window=20).max()
+    recent_low = df['low'].rolling(window=20).min()
+    
+    # Compute the relative position of closing price in the recent range
+    relative_position = (df['close'] - recent_low) / (recent_high - recent_low + 1e-7)
+    
+    # Smooth the signal using a short-term moving average for stability
+    alpha = relative_position.rolling(window=5).mean()
+    
+    return alpha.clip(lower=-1, upper=1)
+```

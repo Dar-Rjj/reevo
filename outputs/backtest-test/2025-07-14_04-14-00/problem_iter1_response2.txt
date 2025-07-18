@@ -1,0 +1,31 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate EMAs for Close Prices (Short Term: 12 days, Long Term: 26 days)
+    short_ema = df['close'].ewm(span=12, adjust=False).mean()
+    long_ema = df['close'].ewm(span=26, adjust=False).mean()
+    
+    # Calculate EMA for High-Low Range (Volatility Measure: 14 days)
+    high_low_range = df['high'] - df['low']
+    volatility_ema = high_low_range.ewm(span=14, adjust=False).mean()
+    
+    # Calculate Relative Strength
+    relative_strength = short_ema / long_ema
+    
+    # Calculate Average True Range (ATR) (using 14 days period)
+    true_range = np.maximum(
+        np.maximum(df['high'] - df['low'], abs(df['high'] - df['close'].shift(1))),
+        abs(df['low'] - df['close'].shift(1))
+    )
+    atr = true_range.rolling(window=14).mean()
+    
+    # Normalize Volatility (High-Low Range EMA / ATR over 14 days)
+    normalized_volatility = volatility_ema / atr
+    
+    # Combine with Volatility Adjusted Factor
+    factor = relative_strength * normalized_volatility
+    
+    return factor
+```

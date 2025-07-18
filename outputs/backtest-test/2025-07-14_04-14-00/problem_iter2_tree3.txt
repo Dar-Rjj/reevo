@@ -1,0 +1,26 @@
+```txt
+Enhanced Momentum and Volatility Alpha Factor
+├── Calculate Exponential Moving Averages (EMA)
+│   ├── Short Term EMA (12 days)
+│   └── Long Term EMA (26 days)
+├── Calculate Volatility Measures
+│   ├── High-Low Range EMA (14 days)
+│   └── Average True Range (ATR) (14 days)
+├── Calculate Relative Strength
+│   ├── Subtract Long Term EMA from Short Term EMA
+│   └── Divide by Long Term EMA
+├── Normalize Volatility
+│   ├── Use High-Low Range EMA
+│   ├── Use ATR
+│   └── Divide High-Low Range EMA by ATR
+├── Combine with Volume Trend
+│   ├── Calculate Volume Momentum
+│   │   ├── Use Volume
+│   │   ├── Lag Volume by 1
+│   │   └── Subtract Lagged Volume from Current Volume
+│   └── Scale by Normalized Volatility
+│       └── Multiply Volume Momentum by Normalized Volatility
+└── Final Alpha Factor
+    ├── Use Relative Strength
+    └── Add Scaled Volume Momentum
+```

@@ -1,0 +1,67 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced alpha factor heuristic using adaptive lookbacks, volume-weighted momentum,
+    dynamic normalization, and volatility filtering for robustness.
+
+    Factor Interpretation:
+    - Positive values suggest bullish momentum with confirming volume
+    - Negative values indicate bearish or weakening trends
+    """
+
+    # Adaptive Lookback based on rolling volatility
+    returns = df['close'].pct_change()
+    volatility = returns.groupby(level=0).rolling(20).std().droplevel(0)
+    
+    # Map volatility to lookback window: higher volatility => longer lookback
+    adaptive_window = (20 * (1 + volatility)).astype(int).clip(5, 60)
+
+    # Volume-Weighted Momentum with adaptive lookback
+    def rolling_momentum(group):
+        ticker, data = group
+        windows = adaptive_window.loc[ticker]
+        return windows.apply(lambda w: data['close'][-int(w):].pct_change(periods=int(w)).iloc[-1])
+
+    raw_momentum = df.groupby(level=0).apply(lambda x: rolling_momentum(x)).droplevel(0)
+
+    # Dynamic Volume Adjustment: z-score normalized
+    vol_avg = df.groupby(level=0)['volume'].transform(
+        lambda x: x.rolling(window=10).mean())
+    vol_std = df.groupby(level=0)['volume'].transform(
+        lambda x: x.rolling(window=10).std())
+    vol_zscore = (df['volume'] - vol_avg) / (vol_std + 1e-7)
+
+    volume_adjusted_mom = raw_momentum * (1 + vol_zscore.clip(-3, 3))
+
+    # Relative Strength Index (RSI) with dynamic smoothing
+    def rolling_rsi(group):
+        ticker, data = group
+        windows = adaptive_window.loc[ticker]
+        delta = data['close'].diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        avg_gain = gain.rolling(window=windows.mean()).mean()
+        avg_loss = loss.rolling(window=windows.mean()).mean()
+        rs = avg_gain / avg_loss.replace(0, 1e-6)
+        return 100 - (100 / (1 + rs))
+
+    rsi = df.groupby(level=0).apply(lambda x: rolling_rsi(x)).droplevel(0)
+
+    # Volatility Filtering using exponential decay weighting
+    ewm_vol = returns.groupby(level=0).apply(
+        lambda x: x.pct_change().ewm(span=10, min_periods=5).std()).droplevel(0)
+
+    # Rank-based normalization across all components
+    mom_rank = volume_adjusted_mom.groupby(level=1).rank(pct=True)
+    rsi_rank = rsi.groupby(level=1).rank(pct=True)
+    vol_rank = ewm_vol.groupby(level=1).rank(pct=True)
+
+    # Final Alpha Factor (adaptive weights based on market state?)
+    combined_factor = (
+        0.45 * mom_rank +
+        0.3 * (1 - rsi_rank) +   # Invert RSI so lower values are better
+        0.25 * (1 - vol_rank)    # Prefer lower volatility
+    )
+
+    return combined_factor.fillna(0).clip(-3, 3)
+```

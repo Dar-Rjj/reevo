@@ -1,0 +1,52 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    An enhanced heuristic for generating a composite alpha factor that integrates price trend,
+    volume divergence, and volatility normalization. Components are rank-normalized for robustness
+    and combined with balanced weights.
+    
+    Factor Interpretation:
+    - High positive value indicates strong upward potential (positive trend + bullish volume + low volatility)
+    - Low negative value suggests downward pressure (negative trend + bearish volume + high volatility)
+    """
+    
+    # 1. Price Trend Component: normalized price change over medium-term window
+    trend_window = 10
+    price_trend = df['close'].pct_change(trend_window)
+    price_trend_rank = price_trend.groupby(level=1).rank().groupby(level=0).apply(
+        lambda x: x.rolling(trend_window).mean()).droplevel(0)
+
+    # 2. Volume Divergence Component: deviation of volume relative to its moving average
+    vol_window = 10
+    avg_volume = df.groupby(level=0)['volume'].rolling(vol_window).mean().droplevel(0)
+    vol_signal = (df['volume'] - avg_volume) / (avg_volume + 1e-7)
+    vol_signal_rank = vol_signal.groupby(level=1).rank().groupby(level=0).apply(
+        lambda x: x.rolling(vol_window).mean()).droplevel(0)
+
+    # 3. Volatility Adjustment: rolling standard deviation of returns (short-term)
+    ret_vol_window = 5
+    volatility = df.groupby(level=0)['close'].pct_change().abs().rolling(ret_vol_window).std().droplevel(0)
+    volatility_rank = -volatility.groupby(level=1).rank().groupby(level=0).apply(
+        lambda x: x.rolling(ret_vol_window).mean()).droplevel(0)  # Negative impact
+
+    # Normalize components by global ranking across all tickers and dates
+    def global_rank_norm(x):
+        return x.rank(method='average') / (x.count() + 1)
+
+    price_trend_score = global_rank_norm(price_trend)
+    vol_signal_score = global_rank_norm(vol_signal)
+    volatility_score = global_rank_norm(volatility)
+
+    # Balance weights using economic intuition:
+    # Trend (40%), Volume Divergence (30%), Volatility (30%)
+    combined_factor = (
+        0.4 * price_trend_score +
+        0.3 * vol_signal_score +
+        0.3 * volatility_score
+    )
+
+    # Fill missing values safely
+    combined_factor = combined_factor.fillna(0)
+
+    return pd.Series(combined_factor, index=df.index, name='heuristics_v2')
+```

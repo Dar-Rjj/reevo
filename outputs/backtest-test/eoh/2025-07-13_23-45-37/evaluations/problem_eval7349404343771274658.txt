@@ -1,0 +1,42 @@
+import pandas as pd
+import numpy as np
+from ta import add_all_ta_features
+from ta.momentum import RSIIndicator
+from ta.trend import MACD, SMAIndicator
+
+def heuristics_v2(df):
+    # Add all technical analysis features
+    df = add_all_ta_features(df, open="open", high="high", low="low", close="close", volume="volume")
+    
+    # Calculate RSI
+    rsi = RSIIndicator(close=df['close'], window=14).rsi()
+    
+    # Calculate MACD
+    macd = MACD(close=df['close'], window_slow=26, window_fast=12, window_sign=9)
+    macd_signal = macd.macd_signal()
+    
+    # Calculate Moving Average
+    sma = SMAIndicator(close=df['close'], window=50).sma_indicator()
+    
+    # Historical correlation with returns (for simplification, using next day return as target)
+    if 'return' not in df.columns:
+        df['return'] = df['close'].pct_change().shift(-1)
+    
+    correlations = {
+        'rsi': rsi.corr(df['return']),
+        'macd_signal': macd_signal.corr(df['return']),
+        'sma': sma.corr(df['return'])
+    }
+    
+    # Normalizing the weights
+    total_corr = sum(abs(v) for v in correlations.values())
+    normalized_weights = {k: abs(v) / total_corr for k, v in correlations.items()}
+    
+    # Heuristic calculation
+    heuristic_factor = (normalized_weights['rsi'] * rsi + 
+                        normalized_weights['macd_signal'] * macd_signal + 
+                        normalized_weights['sma'] * sma)
+    
+    # Return the factor values as a Series
+    heuristics_matrix = pd.Series(heuristic_factor, index=df.index, name='alpha_factor')
+    return heuristics_matrix

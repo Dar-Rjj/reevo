@@ -1,0 +1,11 @@
+```txt
+High-to-Low Range Over Close
+├── Calculate High-to-Low Range
+│   ├── Use High price
+│   └── Use Low price
+│       └── Subtract Low from High
+└── Divide by Close price
+    ├── Use Close price
+    └── Perform division
+        └── (High - Low) / Close
+```

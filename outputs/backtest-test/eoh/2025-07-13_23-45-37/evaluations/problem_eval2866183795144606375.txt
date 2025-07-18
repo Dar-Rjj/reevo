@@ -1,0 +1,11 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    fast_ema = df['close'].ewm(span=12, adjust=False).mean()
+    slow_ema = df['close'].ewm(span=26, adjust=False).mean()
+    macd = fast_ema - slow_ema
+    signal_line = macd.ewm(span=9, adjust=False).mean()
+    macd_diff = macd - signal_line
+    volume_std = df['volume'].rolling(window=20).std()
+    heuristics_matrix = (macd_diff / volume_std).fillna(0)
+    return heuristics_matrix

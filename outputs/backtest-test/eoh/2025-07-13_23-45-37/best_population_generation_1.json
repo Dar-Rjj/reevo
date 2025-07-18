@@ -1,0 +1,6 @@
+{
+     "algorithm": "The new algorithm calculates the difference between a 5-day and 20-day moving average of the true range, then adjusts this difference by the rate of change in the closing prices over 7 days, normalized by its own standard deviation, to capture short-term shifts in price volatility and momentum.",
+     "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    def true_range(data):\n        high_low = data['high'] - data['low']\n        high_close_prev = (data['high'] - data['close'].shift(1)).abs()\n        low_close_prev = (data['low'] - data['close'].shift(1)).abs()\n        return pd.concat([high_low, high_close_prev, low_close_prev], axis=1).max(axis=1)\n    \n    tr = true_range(df)\n    short_ma_tr = tr.rolling(window=5).mean()\n    long_ma_tr = tr.rolling(window=20).mean()\n    tr_diff = short_ma_tr - long_ma_tr\n    close_momentum = df['close'].pct_change(periods=7)\n    close_momentum_normalized = (close_momentum - close_momentum.mean()) / close_momentum.std()\n    heuristics_matrix = (tr_diff * close_momentum_normalized).fillna(0)\n    return heuristics_matrix",
+     "objective": -0.03027,
+     "other_inf": null
+}

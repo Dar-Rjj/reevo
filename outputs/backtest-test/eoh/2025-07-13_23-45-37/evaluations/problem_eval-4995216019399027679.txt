@@ -1,0 +1,25 @@
+import pandas as pd
+import numpy as pd
+
+def heuristics_v2(df):
+    # Calculate the True Range
+    df['TR'] = df['high'] - df['low']
+    df['TR'] = df[['TR', (df['close'].shift(1) - df['high']).abs(), (df['close'].shift(1) - df['low']).abs()]].max(axis=1)
+    
+    # Calculate the Average True Range (ATR) over a 14-day period
+    atr_window = 14
+    df['ATR'] = df['TR'].rolling(window=atr_window).mean()
+    
+    # Normalize the ATR
+    df['Norm_ATR'] = (df['ATR'] - df['ATR'].min()) / (df['ATR'].max() - df['ATR'].min())
+    
+    # Calculate the Rate of Change (ROC) of the volume over a 10-day period
+    roc_window = 10
+    df['Volume_ROC'] = df['volume'].pct_change(periods=roc_window)
+    
+    # Combine the normalized ATR and Volume ROC into a single heuristic score
+    df['Heuristic_Score'] = df['Norm_ATR'] * df['Volume_ROC']
+    
+    heuristics_matrix = df['Heuristic_Score']
+    
+    return heuristics_matrix

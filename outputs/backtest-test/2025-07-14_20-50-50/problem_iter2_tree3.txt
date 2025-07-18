@@ -1,0 +1,18 @@
+```txt
+Volume-Weighted Momentum Indicator
+├── Calculate Daily Return
+│   ├── Use Close price
+│   └── Subtract Previous Day's Close
+├── Calculate Short-Term EMA
+│   ├── Use Daily Returns
+│   └── Apply Exponential Moving Average with N Days
+├── Calculate Volume Factor
+│   ├── Sum of Volumes in the Last M Days
+│   └── Divide by M
+├── Multiply Daily Return by Volume Factor
+│   ├── Use Daily Return
+│   └── Multiply by Volume Factor
+└── Calculate Long-Term EMA
+    ├── Use Weighted Daily Returns
+    └── Apply Exponential Moving Average with P Days
+```

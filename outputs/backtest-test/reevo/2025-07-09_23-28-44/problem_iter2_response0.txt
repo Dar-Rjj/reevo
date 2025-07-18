@@ -1,0 +1,50 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic alpha factor combining momentum, volume divergence, and volatility,
+    with dynamic weighting based on recent market conditions. Uses ranking for normalization
+    to improve interpretability and cross-sectional comparability.
+    
+    Factor Interpretation:
+    - Positive value indicates bullish, high conviction signals (potential upward move)
+    - Negative value suggests bearish or uncertain market condition (potential downward move)
+    """
+
+    window = 20  # unified lookback window for most components
+
+    # Momentum: Close relative to rolling mean, normalized by close
+    price_trend = df['close'] - df.groupby(level=0)['close'].rolling(window=window).mean().values
+    norm_momentum = price_trend / (df['close'] + 1e-7)
+
+    # Volume signal: deviation from average volume, normalized
+    avg_volume = df.groupby(level=0)['volume'].rolling(window=window).mean().values
+    vol_signal = df['volume'] / avg_volume
+
+    # Volatility adjustment: rolling std of returns
+    returns = df['close'].pct_change()
+    volatility = returns.groupby(level=0).rolling(window=window).std().values
+    volatility = np.where(volatility == 0, 1e-7, volatility)
+
+    # Combine factors with dynamic weights
+    # Weight more heavily on momentum in low volatility regimes
+    # Increase volume weight when volume is significantly above average
+    momentum_weight = 0.4 * (1 - volatility / volatility.max())
+    volume_weight = 0.3 * np.clip(vol_signal - 1, 0, None)
+    base_vol_weight = 0.3
+    volatility_weight = base_vol_weight - 0.1 * (vol_signal > 1.5)
+
+    # Final factor: weighted combination
+    combined_factor = (
+        momentum_weight * norm_momentum.rank() +
+        volume_weight * vol_signal.rank() -
+        volatility_weight * volatility.rank()
+    )
+
+    # Normalize using rolling z-score to stabilize over time
+    def rolling_zscore(grouped_ser, window):
+        return grouped_ser.transform(lambda x: x.rolling(window).apply(lambda y: (y[-1] - np.mean(y)) / np.std(y), raw=True))
+
+    combined_factor = rolling_zscore(combined_factor.groupby(level=0), window=window)
+
+    return pd.Series(combined_factor, index=df.index, name='heuristics_v2')
+```

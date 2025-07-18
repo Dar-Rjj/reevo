@@ -1,0 +1,32 @@
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate the logarithmic returns of the closing prices
+    log_returns = np.log(df['close'] / df['close'].shift(1))
+    
+    # Compute the exponential moving average (EMA) of the logarithmic returns
+    ema_log_returns = log_returns.ewm(span=20, adjust=False).mean()
+    
+    # Normalize the EMA of the logarithmic returns
+    norm_ema_log_returns = (ema_log_returns - ema_log_returns.mean()) / ema_log_returns.std()
+    
+    # Calculate the true range
+    tr1 = df['high'] - df['low']
+    tr2 = abs(df['high'] - df['close'].shift(1))
+    tr3 = abs(df['low'] - df['close'].shift(1))
+    true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    
+    # Calculate the average true range (ATR)
+    atr = true_range.rolling(window=20).mean()
+    
+    # Normalize the ATR
+    norm_atr = (atr - atr.mean()) / atr.std()
+    
+    # Calculate the normalized difference between the current ATR and its mean
+    norm_diff_atr = (atr - atr.rolling(window=20).mean()) / atr.rolling(window=20).std()
+    
+    # Combine the normalized EMA of logarithmic returns and the normalized difference of ATR into a single heuristic
+    heuristics_matrix = 0.6 * norm_ema_log_returns + 0.4 * norm_diff_atr
+    
+    return heuristics_matrix

@@ -1,0 +1,1 @@
+Emphasize dynamic normalization and volume-weighted momentum with adaptive lookback periods. Use rank-based, volatility-weighted components for robustness. Prioritize interpretability through clear signal drivers and regime-adaptive scaling to handle outliers and structural shifts effectively.

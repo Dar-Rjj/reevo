@@ -1,0 +1,31 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # 1. Price Position (Normalized Oscillator)
+    lookback_window = 20
+    rolling_high = df['high'].rolling(window=lookback_window).max()
+    rolling_low = df['low'].rolling(window=lookback_window).min()
+    price_position = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # 2. Smoothed Momentum Factor (10-day return, EMA-smoothed for stability)
+    momentum_factor = df['close'].pct_change(periods=10).ewm(span=5).mean().clip(lower=-0.2, upper=0.2)
+
+    # 3. Volume Surge Detection (Volume / Rolling Average Volume)
+    avg_volume = df['volume'].rolling(window=lookback_window).mean()
+    volume_ratio = df['volume'] / (avg_volume + 1e-7)
+
+    # 4. Adaptive Weighting: Reduce weight when volume is high to prioritize low-volume signals
+    adaptive_weight = 1.0 / (volume_ratio + 1e-7)
+
+    # 5. Regime Volatility Filter using ATR approximation
+    atr = (rolling_high - rolling_low) / df['close'].shift(1)
+    volatility_rank = atr.rolling(window=lookback_window).mean().rank(pct=True).fillna(0.5)
+    
+    # Scale adaptive weight by volatility regime (less exposure during high volatility)
+    regime_scaled_weight = adaptive_weight * (1 - volatility_rank)
+
+    # 6. Composite Alpha with centered price position and momentum confirmation
+    alpha = regime_scaled_weight * (price_position - 0.5) + momentum_factor
+
+    # Final normalization and clipping for stability
+    return alpha.clip(lower=-1, upper=1)
+```

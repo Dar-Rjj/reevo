@@ -1,0 +1,25 @@
+import pandas as pd
+from sklearn.decomposition import PCA
+
+def heuristics_v2(df):
+    # Calculate simple moving averages
+    sma_short = df['close'].rolling(window=5).mean()
+    sma_long = df['close'].rolling(window=20).mean()
+    
+    # Calculate momentum
+    momentum = df['close'] / df['close'].shift(1) - 1
+    
+    # Calculate price-to-volume ratio
+    pv_ratio = df['close'] / df['volume']
+    
+    # Combine all calculated features into a single DataFrame
+    features_df = pd.concat([sma_short, sma_long, momentum, pv_ratio], axis=1).dropna()
+    
+    # Apply PCA for dimensionality reduction
+    pca = PCA(n_components=1)
+    principal_components = pca.fit_transform(features_df)
+    
+    # Convert the principal components back to a Pandas Series
+    heuristics_matrix = pd.Series(principal_components.flatten(), index=features_df.index, name='alpha_factor')
+    
+    return heuristics_matrix

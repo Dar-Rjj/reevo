@@ -1,0 +1,34 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df, n=14):
+    # Calculate True Range
+    df['Previous Close'] = df['close'].shift(1)
+    df['High-Low'] = df['high'] - df['low']
+    df['High-PrevClose'] = df['high'] - df['Previous Close']
+    df['PrevClose-Low'] = df['Previous Close'] - df['low']
+    df['True Range'] = df[['High-Low', 'High-PrevClose', 'PrevClose-Low']].max(axis=1)
+
+    # Compute Average True Range over n periods
+    df['ATR'] = df['True Range'].rolling(window=n).mean()
+
+    # Determine Price Direction
+    df['Price Direction'] = (df['close'] > df['close'].shift(n)).astype(int)
+
+    # Create Volatility-Adjusted Momentum Factor
+    df['Volatility-Adjusted Momentum'] = df['Price Direction'] * df['ATR']
+
+    # Add Relative Open-Close Position
+    df['Open-Close'] = df['close'] - df['open']
+    df['Volatility-Adjusted Momentum'] += df['Open-Close']
+
+    # Combine with Volume Trend
+    df['Volume Momentum'] = df['volume'] - df['volume'].shift(1)
+    df['Intraday Price Movement'] = df['close'] - df['open']
+    df['Volatility-Adjusted Momentum'] += df['Volume Momentum'] * df['Intraday Price Movement']
+
+    # Final Alpha Factor
+    alpha_factor = df['Volatility-Adjusted Momentum']
+
+    return alpha_factor
+```

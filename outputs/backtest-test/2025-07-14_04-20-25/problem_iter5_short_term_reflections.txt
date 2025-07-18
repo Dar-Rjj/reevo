@@ -1,0 +1,4 @@
+Integrate more granular intraday data, refine volatility adjustments, and incorporate trade amount for weightings.
+Consider incorporating transaction amounts and refining weight adjustments for more accurate momentum and volatility measures.
+Integrate volume and volatility more cohesively; simplify by focusing on core momentum and smoothing.
+Simplify, focus on key momentum and volatility, use dynamic volume weights, and avoid over-smoothing.

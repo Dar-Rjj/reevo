@@ -1,0 +1,26 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the relative strength index (RSI) over a short lookback window
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    window = 7  # short-term RSI for sensitivity
+    avg_gain = gain.groupby(level=1).rolling(window=window).mean().droplevel(0)
+    avg_loss = loss.groupby(level=1).rolling(window=window).mean().droplevel(0)
+
+    rs = avg_gain / avg_loss.replace(0, 1e-7)
+    rsi = 100 - (100 / (1 + rs))
+
+    # Normalize volume by rolling median to detect unusual trading activity
+    vol_median = df['volume'].groupby(level=1).rolling(window=window).median().droplevel(0)
+    norm_volume = df['volume'] / (vol_median + 1e-7)
+
+    # Momentum factor based on price change over the same window
+    momentum = df['close'].pct_change(window)
+
+    # Combine signals: High momentum, low RSI (oversold), and high volume anomaly
+    alpha_factor = momentum * (1 / rsi) * norm_volume
+
+    return alpha_factor.clip(lower=-10, upper=10)  # Capping extreme values for stability
+```

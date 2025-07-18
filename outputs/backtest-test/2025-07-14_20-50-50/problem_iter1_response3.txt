@@ -1,0 +1,18 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate High-Low Range
+    high_low_range = df['high'] - df['low']
+    
+    # Calculate Average Price
+    average_price = (df['high'] + df['low']) / 2
+    
+    # Adjust for Volume
+    volume_adjustment = 1 / df['volume']
+    
+    # Final factor calculation
+    factor_values = (high_low_range / average_price) * volume_adjustment
+    
+    return factor_values
+```

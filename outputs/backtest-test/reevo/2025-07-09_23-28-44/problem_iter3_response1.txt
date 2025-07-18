@@ -1,0 +1,57 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Novel alpha heuristic combining multiple signals with dynamic divergence analysis:
+    - Adaptive RSI for trend strength assessment
+    - Volume-Price divergence detection
+    - Volatility regime adjustment
+    - Rank-based combination with dynamic signal weighting
+    
+    Factor Interpretation:
+    - Positive values indicate strong bullish signals with confirmation across indicators
+    - Negative values highlight bearish setups with divergent behavior
+    """
+    
+    # 1. Adaptive RSI (ARSI): dynamically adjust period based on volatility
+    returns = df['close'].pct_change()
+    vol_regime = returns.groupby(level=0).rolling(20).std().droplevel(0)
+    arsi_period = (15 * (1 + vol_regime)).astype(int).clip(5, 30)  # Dynamic window
+    
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    avg_gain = gain.groupby(level=0).apply(lambda x: x.rolling(aris_period.loc[x.index].iloc[-1]).mean()).droplevel(0)
+    avg_loss = loss.groupby(level=0).apply(lambda x: x.rolling(aris_period.loc[x.index].iloc[-1]).mean()).droplevel(0)
+
+    rs = avg_gain / avg_loss.replace(0, 1e-6)
+    arsi = 100 - (100 / (1 + rs))
+    
+    # 2. Volume-Price Divergence Signal
+    price_mom = df['close'].pct_change(5)
+    volume_mom = df['volume'].pct_change(5)
+    
+    divergence = price_mom - volume_mom
+    div_rank = divergence.rank(pct=True)
+    
+    # 3. Trend Confirmation Factor
+    short_ma = df['close'].groupby(level=0).rolling(5).mean().droplevel(0)
+    long_ma = df['close'].groupby(level=0).rolling(20).mean().droplevel(0)
+    
+    trend_signal = ((short_ma > long_ma) * 2 - 1).fillna(0)
+    
+    # 4. Normalized Components with adaptive weights
+    arsi_norm = (arsi - 50) / 50  # Normalize RSI to [-1, 1]
+    divergence_norm = (div_rank - 0.5) * 2  # Normalize divergence to [-1, 1]
+
+    volatility_weight = 1 / (1 + vol_regime)
+    
+    # Final factor with interpretable dynamics
+    combined_factor = (
+        volatility_weight * (0.4 * arsi_norm + 
+                             0.3 * divergence_norm + 
+                             0.3 * trend_signal)
+    )
+    
+    return combined_factor.fillna(0).clip(-2, 2)
+```

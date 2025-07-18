@@ -1,0 +1,50 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    An improved alpha factor heuristic combining momentum, RSI, volume divergence,
+    and volatility adjustment. Each signal is normalized and combined using interpretable weights.
+
+    Factor Interpretation:
+    - Higher values suggest stronger bullish potential with supportive volume
+    - Lower/negative values suggest bearish pressure or divergence
+    """
+
+    # Momentum Signal: Normalized price change over a medium window
+    momentum_window = 10
+    momentum = (df['close'] - df.groupby(level=0)['close'].shift(momentum_window)) / \
+               (df.groupby(level=0)['close'].rolling(window=momentum_window).mean().values + 1e-7)
+
+    # Relative Strength Index (RSI) - Short-term for responsiveness
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    lookback = 7
+    avg_gain = gain.groupby(level=0).rolling(window=lookback).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(window=lookback).mean().droplevel(0)
+    rs = avg_gain / avg_loss.replace(0, 1e-6)
+    rsi = 100 - (100 / (1 + rs))
+
+    # Volume Divergence: Volume vs. recent average, z-score normalized
+    vol_signal = (df['volume'] - df.groupby(level=0)['volume'].rolling(window=lookback).mean().values) / \
+                 (df.groupby(level=0)['volume'].rolling(window=lookback).std().values + 1e-7)
+
+    # Volatility Adjustment: Inverse of rolling volatility to reduce noisy signals
+    returns = df['close'].pct_change()
+    volatility = returns.groupby(level=0).rolling(window=20).std().droplevel(0)
+
+    # Rank-based normalization across all components
+    momentum_norm = momentum.rank(pct=True)
+    rsi_norm = (1 - rsi.rank(pct=True))  # Bearish RSIs get lower rank; invert
+    vol_div_norm = vol_signal.rank(pct=True)
+    volat_norm = (1 - volatility.rank(pct=True))  # High volatility = bad signal
+
+    # Final Alpha Factor (weighted sum; can be adjusted per strategy preference)
+    alpha_factor = (
+        0.3 * momentum_norm +
+        0.25 * rsi_norm +
+        0.2 * vol_div_norm +
+        0.25 * volat_norm
+    )
+
+    return alpha_factor.fillna(0).clip(-3, 3)
+```

@@ -1,0 +1,27 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Rate of Change (ROC) calculation
+    roc_period = 10
+    df['ROC'] = (df['close'] - df['close'].shift(roc_period)) / df['close'].shift(roc_period)
+    
+    # High to Low Ratio
+    df['High_Low_Ratio'] = df['high'] / df['low']
+    
+    # Volume Growth Rate
+    vol_growth_period = 5
+    df['Volume_Growth'] = df['volume'] / df['volume'].shift(vol_growth_period) - 1
+    
+    # Average Volume
+    avg_volume_window = 20
+    df['Avg_Volume'] = df['volume'].rolling(window=avg_volume_window).mean()
+    
+    # Weighted Sum and Normalization
+    weights = [0.4, 0.3, 0.3]
+    df['Heuristic_Score'] = (df['ROC'] * weights[0] + 
+                             df['High_Low_Ratio'] * weights[1] + 
+                             df['Volume_Growth'] * weights[2]) / df['Avg_Volume']
+    
+    heuristics_matrix = df['Heuristic_Score'].fillna(0)
+    
+    return heuristics_matrix

@@ -1,0 +1,50 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday Log Returns
+    df['open_to_close_return'] = np.log(df['close'] / df['open'])
+    df['high_to_low_range'] = np.log(df['high'] / df['low'])
+
+    # Compute Volume-Weighted Intraday Momentum
+    total_volume = df['volume'].sum()
+    df['volume_ratio'] = df['volume'] / total_volume
+    
+    total_amount = df['amount'].sum()
+    df['amount_ratio'] = df['amount'] / total_amount
+    
+    df['combined_weights'] = (df['volume_ratio'] + df['amount_ratio']) / 2
+    df['weighted_log_returns'] = df['combined_weights'] * (df['open_to_close_return'] + df['high_to_low_range'])
+
+    # Apply Smoothing and Trend Indicator
+    df['ema_weighted_log_returns'] = df['weighted_log_returns'].ewm(span=10, adjust=False).mean()
+    df['ema_volume'] = df['volume'].ewm(span=10, adjust=False).mean()
+    
+    fast_ema = df['ema_weighted_log_returns'].ewm(span=12, adjust=False).mean()
+    slow_ema = df['ema_weighted_log_returns'].ewm(span=26, adjust=False).mean()
+    df['macd'] = fast_ema - slow_ema
+
+    # Incorporate Granular Intraday Data
+    # Assuming we have minute-level close prices and volumes in the DataFrame
+    if 'minute_close' in df.columns and 'minute_volume' in df.columns:
+        df['minute_log_returns'] = np.log(df['minute_close'] / df['minute_close'].shift(1))
+        df['minute_volume_ratio'] = df['minute_volume'] / df['minute_volume'].sum()
+        df['minute_weighted_log_returns'] = df['minute_volume_ratio'] * df['minute_log_returns']
+        minute_momentum = df['minute_weighted_log_returns'].sum()
+
+        # Incorporate Volatility Adjustment
+        daily_volatility = df['open_to_close_return'].std() + df['high_to_low_range'].std()
+        minute_volatility = df['minute_log_returns'].std()
+        volatility_adjustment = 1 / (daily_volatility + minute_volatility)
+
+        # Final Alpha Factor
+        df['alpha_factor'] = (df['ema_weighted_log_returns'] + df['macd'] + minute_momentum) * volatility_adjustment
+    else:
+        # If no minute-level data is available, use only the daily data
+        daily_volatility = df['open_to_close_return'].std() + df['high_to_low_range'].std()
+        volatility_adjustment = 1 / daily_volatility
+        df['alpha_factor'] = (df['ema_weighted_log_returns'] + df['macd']) * volatility_adjustment
+
+    return df['alpha_factor']
+```

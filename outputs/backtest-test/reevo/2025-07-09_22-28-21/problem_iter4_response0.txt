@@ -1,0 +1,24 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Normalized price within a dynamic rolling window (sensitive to recent price action)
+    lookback = 10
+    rolling_high = df['high'].rolling(window=lookback).max()
+    rolling_low = df['low'].rolling(window=lookback).min()
+    normalized_price = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # Volume signal: smoothed deviation from historical average, with outlier clipping
+    avg_volume = df['volume'].rolling(window=lookback).mean()
+    std_volume = df['volume'].rolling(window=lookback).std()
+    volume_anomaly = (df['volume'] - avg_volume) / (std_volume + 1e-7)
+    smoothed_volume_anomaly = volume_anomaly.clip(-3, 3)  # Reduce impact of extreme outliers
+
+    # Inverse volatility weighting based on recent trading range
+    volatility = (rolling_high - rolling_low) / df['close'].shift(1)
+    inv_volatility_weight = 1.0 / (volatility + 1e-7)
+
+    # Composite alpha: weighted combination of normalized price and volume anomaly
+    alpha = inv_volatility_weight * (normalized_price * 0.6 + smoothed_volume_anomaly * 0.4)
+
+    # Final normalization and bounds clipping for stability
+    return alpha.clip(lower=-1, upper=1)
+```

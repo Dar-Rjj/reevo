@@ -1,0 +1,23 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Price position in rolling high-low window (normalized momentum oscillator)
+    lookback_window = 20
+    rolling_high = df['high'].rolling(window=lookback_window).max()
+    rolling_low = df['low'].rolling(window=lookback_window).min()
+    price_position = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # Momentum factor: smoothed 10-day return
+    momentum_factor = df['close'].pct_change(periods=10).ewm(span=5).mean().clip(lower=-0.2, upper=0.2)
+
+    # Volume ratio: current volume over recent average (normalized surge detection)
+    avg_volume = df['volume'].rolling(window=lookback_window).mean()
+    volume_ratio = df['volume'] / (avg_volume + 1e-7)
+
+    # Adaptive weight: inverse proportional to volume activity (lower volume = higher attention weight)
+    adaptive_weight = 1.0 / (volume_ratio + 1e-7)
+
+    # Composite alpha: weighted combination of price action and momentum, centered at zero
+    alpha = adaptive_weight * (price_position - 0.5) + momentum_factor
+
+    return alpha.clip(lower=-1, upper=1)
+```

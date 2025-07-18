@@ -1,0 +1,36 @@
+```txt
+Relative Strength, Volatility, and Volume Change Alpha Factor
+├── Calculate Daily Log Return
+│   ├── Use Close price of today
+│   └── Use Close price of yesterday
+│       └── ln(Close_today / Close_yesterday)
+├── Calculate Historical Volatility
+│   ├── Use Daily Log Returns over the last Q days
+│   └── Calculate Standard Deviation
+│       └── std(Daily_Log_Returns)
+├── Calculate Volume Trend
+│   ├── Use Volume of today
+│   └── Use Volume of yesterday
+│       └── Today's Volume / Yesterday's Volume
+├── Calculate High-to-Low Range
+│   ├── Use High price
+│   └── Use Low price
+│       └── High - Low
+├── Calculate Relative Strength
+│   ├── Use Close price
+│   ├── Use High price
+│   └── Use Low price
+│       └── (Close - Low) / (High - Low)
+├── Smoothing with Exponential Moving Averages
+│   ├── Short-Term EMA on Daily Log Returns
+│   │   └── Apply Exponential Moving Average with N Days
+│   └── Long-Term EMA on Daily Log Returns
+│       └── Apply Exponential Moving Average with P Days
+├── Final Alpha Factor
+    ├── Combine Components
+    │   ├── Relative Strength
+    │   ├── Volume Trend
+    │   ├── Smoothed Momentum (Short-Term EMA - Long-Term EMA)
+    │   └── Inverse of Historical Volatility
+    └── Output the final value
+```

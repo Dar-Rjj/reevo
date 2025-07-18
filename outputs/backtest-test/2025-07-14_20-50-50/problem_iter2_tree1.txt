@@ -1,0 +1,30 @@
+```txt
+High-Low-Open-Close Range and Volume Momentum
+├── Calculate High-Low Range
+│   ├── Use High price
+│   └── Use Low price
+├── Calculate Open-Close Range
+│   ├── Use Open price
+│   └── Use Close price
+├── Combine Ranges
+│   ├── Sum of High-Low Range and Open-Close Range
+│   └── Divide by Close price
+│       └── Use Close price
+├── Calculate Daily Log Return
+│   ├── Use Close price of today
+│   └── Use Close price of yesterday
+├── Volume Momentum
+│   ├── Calculate Volume Ratio
+│   │   ├── Use Volume of today
+│   │   └── Use Average Volume of the past 5 days
+│   └── Multiply Daily Log Return by Volume Ratio
+└── Final Alpha Factor
+    ├── Multiply Combined Range by Volume Momentum
+    │   ├── Use result from Combine Ranges
+    │   └── Use result from Volume Momentum
+    └── Subtract Cumulative Average Log Return
+        ├── Calculate Average Log Return
+        │   └── For each day in the past 5 days
+        │       └── Calculate Daily Log Return for that day
+        └── Subtract this average from the previous result
+```

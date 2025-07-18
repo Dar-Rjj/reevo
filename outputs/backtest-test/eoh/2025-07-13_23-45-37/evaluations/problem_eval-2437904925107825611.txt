@@ -1,0 +1,24 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the Momentum
+    momentum = df['close'] / df['close'].shift(12) - 1
+    
+    # Calculate the Volatility (Standard Deviation of log returns)
+    log_returns = np.log(df['close']) - np.log(df['close'].shift(1))
+    volatility = log_returns.rolling(window=20).std()
+    
+    # Calculate the Modified Price Oscillator
+    short_sma = df['close'].rolling(window=10).mean()
+    long_sma = df['close'].rolling(window=30).mean()
+    mpo = short_sma - long_sma
+    
+    # Normalize the indicators
+    momentum_normalized = (momentum - momentum.mean()) / momentum.std()
+    volatility_normalized = (volatility - volatility.mean()) / volatility.std()
+    mpo_normalized = (mpo - mpo.mean()) / mpo.std()
+    
+    # Combine the normalized indicators into a single heuristic score
+    heuristics_matrix = (momentum_normalized + volatility_normalized + mpo_normalized).fillna(0)
+    
+    return heuristics_matrix

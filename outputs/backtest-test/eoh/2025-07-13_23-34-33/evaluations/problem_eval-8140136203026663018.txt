@@ -1,0 +1,22 @@
+import pandas as pd
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+def heuristics_v2(df):
+    # Fill NA values with the method suitable for financial data (e.g., forward fill)
+    df_filled = df.fillna(method='ffill').fillna(method='bfill')
+    
+    # Standardize the dataframe
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(df_filled)
+    
+    # Apply PCA for dimensionality reduction while retaining interpretable factors
+    pca = PCA(n_components=0.95)  # Retain 95% of variance
+    principalComponents = pca.fit_transform(scaled_features)
+    
+    # Construct the heuristic matrix by calculating the cumulative return of each PC
+    heuristics_matrix = pd.DataFrame(principalComponents, index=df.index)
+    heuristics_matrix = heuristics_matrix.pct_change().cumsum().iloc[:, 0]  # Use first PC as the alpha factor
+    
+    return heuristics_matrix

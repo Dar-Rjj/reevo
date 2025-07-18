@@ -1,0 +1,26 @@
+import pandas as pd
+import numpy as np
+
+def normalize(df):
+    return (df - df.mean()) / df.std()
+
+def heuristics_v2(df):
+    # Normalize the dataframe
+    normalized_df = normalize(df)
+    
+    # Calculate simple moving averages (SMA) for 5 and 20 days
+    sma_5 = df['close'].rolling(window=5).mean()
+    sma_20 = df['close'].rolling(window=20).mean()
+    
+    # Calculate momentum as the difference between current price and the price 10 days ago
+    momentum = df['close'] - df['close'].shift(10)
+    
+    # Calculate volume ratio as the current volume divided by the average volume over the past 10 days
+    volume_ratio = df['volume'] / df['volume'].rolling(window=10).mean()
+    
+    # Heuristic score calculation
+    # The weights are chosen arbitrarily for demonstration; in practice, they should be optimized
+    heuristic_score = (sma_5 - sma_20) * 0.4 + momentum * 0.3 + volume_ratio * 0.3
+    
+    # Return the heuristic scores as a Series indexed by date
+    return heuristics_matrix

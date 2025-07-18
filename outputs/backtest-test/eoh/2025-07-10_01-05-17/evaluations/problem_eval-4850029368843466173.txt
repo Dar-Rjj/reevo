@@ -1,0 +1,13 @@
+def heuristics_v2(df):
+    # Calculate 30-day exponential moving average of the close price
+    ema_30 = df['close'].ewm(span=30, adjust=False).mean()
+    # Normalize the EMA
+    normalized_ema = (ema_30 - ema_30.min()) / (ema_30.max() - ema_30.min())
+    # Calculate 21-day Average True Range (ATR)
+    tr = df[['high', 'low', 'close']].apply(lambda x: max(x) - min(x), axis=1)
+    atr = tr.rolling(window=21).mean()
+    # Calculate 7-day Rate of Change (ROC) of the close price
+    roc_7 = df['close'].pct_change(periods=7)
+    # Combine normalized EMA, ATR, and ROC
+    heuristics_matrix = (normalized_ema + atr + roc_7) / 3
+    return heuristics_matrix

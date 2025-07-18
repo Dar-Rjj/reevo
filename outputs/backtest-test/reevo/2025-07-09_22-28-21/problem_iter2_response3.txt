@@ -1,0 +1,17 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Normalized price level within recent trading range (low to high)
+    lookback_window = 10
+    rolling_high = df['high'].rolling(window=lookback_window).max()
+    rolling_low = df['low'].rolling(window=lookback_window).min()
+    
+    normalized_price = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+    
+    # Volume pressure: deviation of volume from its moving average
+    volume_signal = (df['volume'] - df['volume'].rolling(window=lookback_window).mean()) / (df['volume'].rolling(window=lookback_window).std() + 1e-7)
+    
+    # Combine signals: mean reversion on price extremes, adjusted by volume signal
+    alpha = (1.0 - normalized_price) * volume_signal
+    
+    return alpha.clip(lower=-1, upper=1)
+```

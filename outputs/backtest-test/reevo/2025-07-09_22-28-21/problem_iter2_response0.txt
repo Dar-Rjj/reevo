@@ -1,0 +1,19 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Compute normalized price position in recent range (higher sensitivity to recent data)
+    recent_high = df['high'].rolling(window=10).max()
+    recent_low = df['low'].rolling(window=10).min()
+    normalized_price = (df['close'] - recent_low) / (recent_high - recent_low + 1e-7)
+
+    # Volume activity relative to moving average (adaptive sensitivity with smoothing)
+    volume_ratio = df['volume'] / (df['volume'].rolling(window=10).mean() + 1e-7)
+    smoothed_volume = volume_ratio.clip(lower=0.5, upper=2.0)  # Capping extreme values
+
+    # Adaptive weighting based on inverse volatility and recent market stability
+    volatility_weight = 1.0 / ((recent_high - recent_low) / df['close'].shift(1) + 1e-7)
+
+    # Composite alpha factor combining price action and volume dynamics
+    alpha = volatility_weight * (normalized_price * 0.7 + smoothed_volume * 0.3)
+
+    return alpha.clip(lower=-1, upper=1)
+```

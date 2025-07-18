@@ -1,0 +1,26 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Log Returns
+    df['log_open_close'] = np.log(df['close']) - np.log(df['open'])
+    df['log_high_low'] = np.log(df['high']) - np.log(df['low'])
+
+    # Compute Volume Ratio
+    total_volume = df['volume'].sum()
+    df['volume_ratio'] = df['volume'] / total_volume
+
+    # Weighted Sum of Log Returns
+    df['weighted_log_returns'] = (df['log_open_close'] + df['log_high_low']) * df['volume_ratio']
+
+    # Smoothing Factor using Exponential Moving Average (EMA)
+    df['ema_log_returns'] = df['weighted_log_returns'].ewm(span=10, adjust=False).mean()
+    df['ema_volume'] = df['volume'].ewm(span=10, adjust=False).mean()
+
+    # Standard Deviation Adjustment
+    std_log_returns = df['weighted_log_returns'].std()
+    df['cimo'] = df['ema_log_returns'] / std_log_returns
+
+    return df['cimo']
+```

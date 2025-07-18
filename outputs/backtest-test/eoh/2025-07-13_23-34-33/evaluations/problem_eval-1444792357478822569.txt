@@ -1,0 +1,16 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    def rsi(series, period=14):
+        delta = series.diff(1)
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        RS = gain / loss
+        return 100 - (100 / (1 + RS))
+    
+    df['RSI'] = df['close'].apply(rsi)
+    df['MA_20'] = df['close'].rolling(window=20).mean()
+    df['norm_RSI'] = (df['RSI'] - df['MA_20']) / df['MA_20']
+    df['weighted_norm_RSI'] = df['norm_RSI'] * df['volume']
+    heuristics_matrix = df.groupby(df.index)['weighted_norm_RSI'].sum() / df.groupby(df.index)['volume'].sum()
+    return heuristics_matrix

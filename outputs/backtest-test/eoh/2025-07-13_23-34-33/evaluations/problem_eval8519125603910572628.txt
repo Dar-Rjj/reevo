@@ -1,0 +1,17 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the price volatility using the standard deviation of log returns over 20 days
+    log_returns = (df['close'] / df['close'].shift(1)).apply(np.log)
+    price_volatility = log_returns.rolling(window=20).std()
+    
+    # Calculate the momentum of trading volume
+    volume_momentum = df['volume'].pct_change(periods=20)
+    
+    # Calculate the rate of change in amount over 20 days
+    amount_roc = df['amount'].pct_change(periods=20)
+    
+    # Combine all factors into a single heuristic
+    heuristics_matrix = 0.4 * price_volatility + 0.3 * volume_momentum + 0.3 * amount_roc
+    
+    return heuristics_matrix

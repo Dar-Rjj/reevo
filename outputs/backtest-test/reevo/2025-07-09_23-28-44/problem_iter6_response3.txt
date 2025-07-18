@@ -1,0 +1,89 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Advanced heuristic for generating an adaptive alpha factor by combining multiple signals:
+    - Dynamic RSI with adaptive window based on volatility
+    - Volume-adjusted momentum with decay weighting
+    - Volatility normalization and cross-sectional ranking
+    - Time-series and cross-sectional robustness handling
+
+    Factor Interpretation:
+    - Positive values indicate bullish momentum with volume support and low volatility
+    - Negative values suggest bearish or divergent patterns
+    """
+
+    # 1. Adaptive RSI Calculation (shorter in high vol, longer in low vol)
+    returns = df['close'].pct_change()
+    vol_window = 10
+    volatility = returns.groupby(level=0).rolling(vol_window).std().droplevel(0)
+
+    # Map volatility to RSI window: high volatility -> shorter window (min 5), low vol -> longer (max 14)
+    rsi_window = (14 - 9 * volatility.rank(pct=True)).clip(5, 14).round().astype(int)
+
+    def calc_rolling_rsi(group, windows):
+        return group.diff().pipe(
+            lambda d: (
+                d.where(d > 0, 0).rolling(w).mean() /
+                (-d.where(d < 0, 0).rolling(w).mean()).replace(0, 1e-6)
+            ).pipe(lambda rs: 100 - (100 / (1 + rs)))
+            for w in windows
+        )
+
+    rsi = df.groupby(level=0)['close'].transform(
+        lambda x: x.diff().pipe(
+            lambda d: (
+                d.where(d > 0, 0).rolling(w).mean() /
+                (-d.where(d < 0, 0).rolling(w).mean()).replace(0, 1e-6)
+            ).pipe(lambda rs: 100 - (100 / (1 + rs)))
+        )
+    )
+
+    # 2. Decay-weighted Momentum Signal (higher weight on recent periods)
+    lookback = 5
+    weights = np.arange(1, lookback + 1)**2  # Quadratic weighting for recency bias
+    weights /= weights.sum()
+
+    def weighted_momentum(x):
+        return pd.Series(x).rolling(lookback).apply(lambda y: (y * weights).sum(), raw=True)
+
+    raw_momentum = df['close'].groupby(level=0).transform(weighted_momentum)
+
+    # 3. Dynamic Volume Adjustment Based on Cross-Sectional Percentile
+    avg_volume = df['volume'].groupby(level=0).rolling(lookback).mean().droplevel(0)
+    vol_adjustment = df['volume'] / avg_volume.clip(lower=1e-6)
+
+    # Cross-sectional percentile rank (within-date)
+    def cs_rank(group):
+        return group.rank(pct=True) * 2 - 1  # Maps to [-1, 1] range
+
+    vol_adjustment = vol_adjustment.groupby(level=1).transform(cs_rank)
+    vol_adjustment = vol_adjustment.clip(-1, 1)
+
+    volume_weighted_mom = raw_momentum * (1 + vol_adjustment)  # Amplify signal with volume strength
+
+    # 4. Cross-Sectional Volatility Adjustment
+    rolling_returns = df['close'].pct_change(lookback)
+    asset_volatility = rolling_returns.groupby(level=0).transform(lambda x: x.rolling(lookback).std())
+
+    # Cross-sectionally normalized volatility
+    cs_volatility = asset_volatility.groupby(level=1).transform(cs_rank)
+    volatility_adjustment = 1 / (1 + cs_volatility.clip(0.1, 0.9))  # Avoid extreme weights
+
+    # Final Alpha Factor: Adaptive Weighting using time-based regime
+    date_index = df.index.get_level_values(1)
+    month_progress = (date_index.day / date_index.days_in_month).values  # For dynamic intra-month weighting
+
+    # Dynamic weights: momentum emphasis increases late in month, RSI early in month
+    mom_weight = 0.5 + 0.2 * month_progress
+    rsi_weight = 0.3 - 0.1 * month_progress
+    vol_weight = 0.2 - 0.1 * month_progress
+
+    # Rank-based normalization
+    mom_rank = volume_weighted_mom.groupby(level=1).transform(cs_rank)
+    rsi_rank = rsi.groupby(level=1).transform(cs_rank)
+    vol_adj_rank = volatility_adjustment.groupby(level=1).transform(cs_rank)
+
+    alpha_factor = (
+        mom_weight * mom_rank +
+        rsi_weight * (1 - rsi_rank) +  # Invert RSI so lower RSI = stronger buy signal
+        vol_weight

@@ -1,0 +1,4 @@
+Focus on dynamic normalization, volume-weighted momentum, adaptive volatility windows, and interpretable rank-based component weighting.
+Focus on dynamic normalization, volume-weighted momentum, and adaptive volatility windows for robust, interpretable signals.
+Focus on dynamic normalization, adaptive weighting, and interpretable components. Prioritize robustness against outliers and regime shifts.
+Incorporate dynamic weighting, adaptive lookback periods, and cross-sectional normalization for robustness.

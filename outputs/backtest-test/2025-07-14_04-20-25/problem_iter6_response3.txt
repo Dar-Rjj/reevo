@@ -1,0 +1,40 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday Log Returns
+    df['log_open_to_close'] = np.log(df['close'] / df['open'])
+    df['log_high_to_low'] = np.log(df['high'] / df['low'])
+    
+    # Compute Volume-Weighted Intraday Momentum
+    total_volume = df['volume'].sum()
+    df['volume_ratio'] = df['volume'] / total_volume
+    df['weighted_log_return'] = (df['log_open_to_close'] + df['log_high_to_low']) * df['volume_ratio']
+    
+    # Incorporate Traded Amount
+    total_amount = df['amount'].sum()
+    df['amount_ratio'] = df['amount'] / total_amount
+    df['adjusted_weight'] = df['volume_ratio'] * df['amount_ratio']
+    df['weighted_log_return_adjusted'] = (df['log_open_to_close'] + df['log_high_to_close']) * df['adjusted_weight']
+    
+    # Apply Smoothing and Trend Indicator
+    df['ema_weighted_log_return'] = df['weighted_log_return_adjusted'].ewm(span=10, adjust=False).mean()
+    df['ema_volume'] = df['volume'].ewm(span=10, adjust=False).mean()
+    df['macd_line'] = df['ema_weighted_log_return'].ewm(span=12, adjust=False).mean() - df['ema_weighted_log_return'].ewm(span=26, adjust=False).mean()
+    df['signal_line'] = df['macd_line'].ewm(span=9, adjust=False).mean()
+    
+    # Enhanced Trend Indicators
+    df['rsi'] = 100 - (100 / (1 + df['weighted_log_return_adjusted'].diff().rolling(window=14).mean() / df['weighted_log_return_adjusted'].diff().abs().rolling(window=14).mean()))
+    df['atr'] = df[['high', 'low', 'close']].apply(lambda x: np.max(x) - np.min(x), axis=1).rolling(window=14).mean()
+    
+    # Refine Volatility Adjustment
+    df['std_log_returns'] = df['weighted_log_return_adjusted'].rolling(window=10).std()
+    df['volatility_adjusted_momentum'] = df['weighted_log_return_adjusted'] / df['std_log_returns']
+    df['atr_adjusted_volatility'] = df['volatility_adjusted_momentum'] / df['atr']
+    
+    # Final Alpha Factor
+    df['alpha_factor'] = (df['ema_weighted_log_return'] + df['macd_line'] + df['signal_line'] + df['rsi'] + df['atr_adjusted_volatility'])
+    
+    return df['alpha_factor']
+```

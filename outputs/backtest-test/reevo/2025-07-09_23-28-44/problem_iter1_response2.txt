@@ -1,0 +1,27 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate daily price momentum with normalization by volatility
+    df['momentum_5d'] = df.groupby(level=0)['close'].pct_change(5)
+    df['volatility_20d'] = df.groupby(level=0)['close'].pct_change().rolling(window=20).std().values
+
+    # Normalizing momentum by 20-day historical volatility to control for noise
+    normalized_momentum = df['momentum_5d'] / (df['volatility_20d'] + 1e-7)
+
+    # Price trend asymmetry: ratio of upside deviation to downside deviation over lookback window
+    rolling_returns = df.groupby(level=0)['close'].pct_change()
+    upside_dev = rolling_returns[rolling_returns > 0].rolling(window=20).std()
+    downside_dev = rolling_returns[rolling_returns <= 0].rolling(window=20).std()
+    trend_asymmetry = upside_dev / (downside_dev + 1e-7)
+    
+    # Volume acceleration: Change in volume relative to moving average
+    vol_ma_ratio = df.groupby(level=0)['volume'].pct_change() / (df.groupby(level=0)['volume'].rolling(window=20).mean().values + 1e-7)
+
+    # Combine factors into a single interpretable alpha signal
+    alpha_signal = (
+        0.4 * normalized_momentum +
+        0.3 * trend_asymmetry +
+        0.3 * vol_ma_ratio
+    )
+
+    return alpha_signal.dropna()
+```

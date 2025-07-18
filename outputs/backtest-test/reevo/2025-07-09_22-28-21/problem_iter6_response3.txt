@@ -1,0 +1,34 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Dynamic rolling window based on recent volatility (adaptive lookback)
+    base_window = 10
+    volatility_proxy = (df['high'] - df['low']) / df['close'].shift(1)
+    adaptive_window = base_window * (1 + volatility_proxy.ewm(span=5).mean()).clip(0.5, 2).round().astype(int)
+    
+    # Normalized price position in adaptive window (scaled between 0 and 1)
+    rolling_high = df['high'].rolling(window=base_window).max()
+    rolling_low = df['low'].rolling(window=base_window).min()
+    normalized_price = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # Momentum factor: rate of change over adaptive window
+    momentum_factor = df['close'].pct_change(periods=adaptive_window).clip(-0.3, 0.3)
+
+    # Volume anomaly: deviation from trend with outlier clipping
+    volume_trend = df['volume'].rolling(window=base_window).mean()
+    volume_std = df['volume'].rolling(window=base_window).std()
+    volume_anomaly = (df['volume'] - volume_trend) / (volume_std + 1e-7)
+    smoothed_volume_anomaly = volume_anomaly.clip(-2.5, 2.5)
+
+    # Inverse volatility weighting using recent range and momentum stability
+    inv_volatility_weight = 1.0 / (volatility_proxy + momentum_factor.abs().ewm(span=5).mean() + 1e-7)
+
+    # Composite alpha: weighted combination with dynamic sensitivity
+    alpha = inv_volatility_weight * (
+        normalized_price * 0.5 +
+        momentum_factor * 0.3 +
+        smoothed_volume_anomaly * 0.2
+    )
+
+    # Final output: zero-centered, clipped for robustness
+    return alpha.sub(alpha.mean()).div(alpha.std() + 1e-7).clip(-1, 1)
+```

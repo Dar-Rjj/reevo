@@ -1,0 +1,16 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Rate of Change (ROC)
+    roc = df['close'].pct_change(periods=10) * 100
+    
+    # On-Balance Volume (OBV)
+    obv = (df['volume'] * (df['close'] > df['close'].shift(1)).astype(int) - 
+           df['volume'] * (df['close'] < df['close'].shift(1)).astype(int)).cumsum()
+
+    # Normalize OBV
+    normalized_obv = (obv - obv.min()) / (obv.max() - obv.min())
+    
+    # Composite Heuristic Factor
+    heuristics_matrix = (roc + normalized_obv) / 2
+    return heuristics_matrix

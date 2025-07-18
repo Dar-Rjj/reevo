@@ -1,0 +1,25 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate High-Frequency Volatility
+    df['High_Low_Range'] = df['high'] - df['low']
+    df['True_Range'] = (df['high'] - df['low']).combine((df['close'].shift(1) - df['low']).abs(), max).combine((df['high'] - df['close'].shift(1)).abs(), max)
+    
+    # Construct Intraday Price Momentum
+    df['Intraday_Return'] = (df['close'] - df['open']) / df['open']
+    def adaptive_ema(series, span=10):
+        ema = series.ewm(span=span, adjust=False).mean()
+        return ema
+    df['Smoothed_Returns'] = adaptive_ema(df['Intraday_Return'])
+    
+    # Measure Trading Activity
+    df['Volume_Ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+    df['Dollar_Volume'] = df['volume'] * (df['high'] + df['low'] + df['close']) / 3
+    
+    # Combine all factors to create the final alpha factor
+    alpha_factor = (df['True_Range'] * df['Smoothed_Returns'] * df['Volume_Ratio'] * df['Dollar_Volume'])
+    
+    return alpha_factor
+```

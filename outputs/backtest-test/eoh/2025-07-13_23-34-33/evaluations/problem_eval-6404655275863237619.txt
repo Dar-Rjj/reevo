@@ -1,0 +1,28 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the True Range
+    df['tr'] = df[['high', 'low']].sub(df['close'].shift(1), axis=0).abs().max(axis=1)
+    
+    # Calculate the Average True Range (ATR) over 14 periods
+    atr = df['tr'].rolling(window=14).mean()
+    
+    # Calculate the Directional Movement (+DM, -DM)
+    df['+dm'] = (df['high'] - df['high'].shift(1)).apply(lambda x: max(x, 0))
+    df['-dm'] = (df['low'].shift(1) - df['low']).apply(lambda x: max(x, 0))
+    
+    # Avoid calculating +DM and -DM for the same bar
+    df['+dm'][(df['+dm'] < df['-dm'])] = 0.0
+    df['-dm'][(df['+dm'] > df['-dm'])] = 0.0
+    
+    # Smooth the DMs
+    plus_di = 100 * (df['+dm'].rolling(window=14).sum() / atr)
+    minus_di = 100 * (df['-dm'].rolling(window=14).sum() / atr)
+    
+    # Calculate the Directional Indicator (DX)
+    dx = (plus_di - minus_di).abs() / (plus_di + minus_di) * 100
+    
+    # Combine DX with a weighted average of daily trading volume and price change
+    heuristics_matrix = 0.6 * dx + 0.4 * (df['volume'].pct_change() + df['close'].pct_change())
+    
+    return heuristics_matrix

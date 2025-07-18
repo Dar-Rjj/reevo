@@ -1,0 +1,26 @@
+[
+     {
+          "algorithm": "The algorithm computes a novel alpha factor by normalizing the 30-day moving average of the closing price and then applying a proprietary volatility adjustment, followed by calculating the relative strength index (RSI) to generate heuristics_matrix.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    # Calculate 30-day moving average of the close price\n    ma_30 = df['close'].rolling(window=30).mean()\n    # Normalize the moving average\n    normalized_ma = (ma_30 - ma_30.min()) / (ma_30.max() - ma_30.min())\n    # Apply proprietary volatility adjustment\n    vol_adj = df['close'].pct_change().rolling(window=30).std(ddof=0)\n    adjusted_ma = normalized_ma * (1 + vol_adj)\n    # Calculate RSI\n    daily_returns = df['close'].pct_change()\n    avg_gain = daily_returns.where(daily_returns > 0, 0).rolling(window=14).mean()\n    avg_loss = -daily_returns.where(daily_returns < 0, 0).rolling(window=14).mean()\n    rs = avg_gain / avg_loss\n    rsi = 100 - (100 / (1 + rs))\n    # Generate the heuristics matrix as the final output\n    heuristics_matrix = (adjusted_ma + rsi) / 2\n    return heuristics_matrix",
+          "objective": -0.01354,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm calculates a composite factor by combining moving averages and relative strength index (RSI) to predict future stock returns.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v2(df):\n    def calculate_rsi(series, period=14):\n        delta = series.diff(1)\n        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()\n        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()\n        rs = gain / loss\n        return 100 - (100 / (1 + rs))\n    \n    close = df['close']\n    rsi_values = calculate_rsi(close, 14)\n    ma_short = close.rolling(window=5).mean()\n    ma_long = close.rolling(window=20).mean()\n    heuristics_matrix = (rsi_values + (ma_short - ma_long)) / 2\n    return heuristics_matrix",
+          "objective": -0.01319,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm extracts a set of heuristic alphas by first computing moving averages, relative strength index (RSI), and then combining these with price and volume changes to create a composite heuristics factor.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v2(df):\n    # Moving Averages\n    df['SMA_10'] = df.groupby(level=0)['close'].rolling(window=10).mean().droplevel(0)\n    df['SMA_30'] = df.groupby(level=0)['close'].rolling(window=30).mean().droplevel(0)\n\n    # Calculate Daily Returns\n    df['daily_return'] = df.groupby(level=0)['close'].pct_change()\n    \n    # Relative Strength Index\n    delta = df.groupby(level=0)['close'].diff()\n    gain = (delta.where(delta > 0, 0)).fillna(0)\n    loss = (-delta.where(delta < 0, 0)).fillna(0)\n    avg_gain = gain.rolling(window=14, min_periods=1).mean()\n    avg_loss = loss.rolling(window=14, min_periods=1).mean()\n    rs = avg_gain / avg_loss\n    df['RSI'] = 100 - (100 / (1 + rs))\n\n    # Volume Change\n    df['volume_change'] = df.groupby(level=0)['volume'].pct_change()\n\n    # Composite Heuristic Factor\n    df['heuristics_factor'] = (df['SMA_10'] - df['SMA_30']) + df['RSI'] * df['volume_change']\n    \n    heuristics_matrix = df['heuristics_factor']\n\n    return heuristics_matrix",
+          "objective": -0.00685,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm involves computing a custom momentum and volatility score for each stock based on historical price and volume data, then combining these scores with a liquidity measure to generate a novel alpha factor.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v2(df):\n    def calculate_momentum(row):\n        # Simplified momentum calculation\n        return (row['close'] - row['open']) / row['open']\n\n    def calculate_volatility(sub_df):\n        # Volatility as standard deviation of daily returns\n        daily_returns = sub_df['close'].pct_change()\n        return daily_returns.std()\n\n    def calculate_liquidity(sub_df):\n        # Liquidity can be measured as the average trading volume\n        return sub_df['volume'].mean()\n\n    # Calculate momentum\n    df['momentum'] = df.apply(calculate_momentum, axis=1)\n\n    # Group by ticker to calculate volatility and liquidity\n    grouped = df.groupby(level='ticker')\n\n    # Calculate rolling 30-day volatility\n    df['volatility'] = grouped['close'].rolling(window=30).apply(calculate_volatility).reset_index(level=0, drop=True)\n\n    # Calculate 30-day average liquidity\n    df['liquidity'] = grouped['volume'].rolling(window=30).apply(calculate_liquidity).reset_index(level=0, drop=True)\n\n    # Combine indicators into a single heuristic score\n    df['heuristic_score'] = df['momentum'] * (1/df['volatility']) * (1/np.log(1 + df['liquidity']))\n\n    # Return the heuristic scores as a Series\n    heuristics_matrix = df['heuristic_score']\n    return heuristics_matrix",
+          "objective": Infinity,
+          "other_inf": null
+     }
+]

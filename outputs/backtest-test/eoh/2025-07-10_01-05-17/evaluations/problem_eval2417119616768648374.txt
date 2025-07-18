@@ -1,0 +1,35 @@
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    def calculate_momentum(row):
+        # Simplified momentum calculation
+        return (row['close'] - row['open']) / row['open']
+
+    def calculate_volatility(sub_df):
+        # Volatility as standard deviation of daily returns
+        daily_returns = sub_df['close'].pct_change()
+        return daily_returns.std()
+
+    def calculate_liquidity(sub_df):
+        # Liquidity can be measured as the average trading volume
+        return sub_df['volume'].mean()
+
+    # Calculate momentum
+    df['momentum'] = df.apply(calculate_momentum, axis=1)
+
+    # Group by ticker to calculate volatility and liquidity
+    grouped = df.groupby(level='ticker')
+
+    # Calculate rolling 30-day volatility
+    df['volatility'] = grouped['close'].rolling(window=30).apply(calculate_volatility).reset_index(level=0, drop=True)
+
+    # Calculate 30-day average liquidity
+    df['liquidity'] = grouped['volume'].rolling(window=30).apply(calculate_liquidity).reset_index(level=0, drop=True)
+
+    # Combine indicators into a single heuristic score
+    df['heuristic_score'] = df['momentum'] * (1/df['volatility']) * (1/np.log(1 + df['liquidity']))
+
+    # Return the heuristic scores as a Series
+    heuristics_matrix = df['heuristic_score']
+    return heuristics_matrix

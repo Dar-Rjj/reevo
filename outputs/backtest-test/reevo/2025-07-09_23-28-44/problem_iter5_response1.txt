@@ -1,0 +1,72 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced alpha factor heuristic incorporating:
+    - Adaptive lookback momentum with volume confirmation
+    - Shorter RSI divergence detection
+    - Volatility-weighted returns
+    - Rank-normalized composite scoring
+
+    Factor Interpretation:
+    - Positive values suggest strong trend with healthy volume and low volatility
+    - Negative values indicate weakness, reversal, or unhealthy trend dynamics
+    """
+
+    # 1. Dynamic Momentum Signal with adaptive lookback based on volatility regime
+    returns = df['close'].pct_change()
+    volatility = returns.groupby(level=0).rolling(20).std().droplevel(0)
+    
+    # Adaptive lookback: shorter for high volatility assets, longer for stable ones
+    normalized_vol = volatility.rank(pct=True)
+    base_window = 10 * (1 - normalized_vol) + 5
+    
+    lookback_days = base_window.round().astype(int).clip(3, 15)
+    
+    def dynamic_momentum(x):
+        lb = lookback_days.loc[x.name]
+        return x.iloc[-1] / x.shift(lb).iloc[-1] - 1 if lb < len(x) else np.nan
+    
+    raw_momentum = df['close'].groupby(level=0).apply(lambda x: x.expanding().apply(dynamic_momentum, raw=False))
+    raw_momentum = raw_momentum.droplevel(0)
+
+    # 2. Volume Confirmation Signal
+    volume_ma = df['volume'].groupby(level=0).rolling(10).mean().droplevel(0)
+    volume_ratio = df['volume'] / volume_ma.clip(lower=1e-6)
+    
+    # Volume-weighted momentum signal
+    volume_confirmed_mom = raw_momentum * volume_ratio
+
+    # 3. RSI Divergence Component (7-day window)
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    avg_gain = gain.groupby(level=0).rolling(7).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(7).mean().droplevel(0)
+    
+    rs = avg_gain / avg_loss.replace(0, 1e-6)
+    rsi = 100 - (100 / (1 + rs))
+    
+    # Detect RSI divergence vs price
+    rsi_slope = rsi.groupby(level=0).diff().fillna(0)
+    price_slope = df['close'].pct_change().fillna(0)
+    divergence = rsi_slope * price_slope  # Same sign means no divergence
+    
+    # 4. Risk adjustment using rolling volatility
+    risk_adjusted_return = returns / volatility.clip(lower=1e-6)
+    
+    # 5. Composite ranking system
+    mom_rank = volume_confirmed_mom.rank(pct=True)
+    rsi_divergence_rank = divergence.rank(pct=True)
+    risk_rank = risk_adjusted_return.rank(pct=True)
+    
+    # Final Factor Composition (weights chosen to balance different aspects)
+    combined_factor = (
+        0.35 * mom_rank +                   # Trend strength confirmed by volume
+        0.25 * (1 - rsi_divergence_rank) +  # Less divergence = better
+        0.25 * risk_rank +                  # Higher risk-adjusted return
+        0.15 * df['amount'].rank(pct=True)  # Liquidity preference
+    )
+    
+    return combined_factor.fillna(0).clip(-3, 3)
+```

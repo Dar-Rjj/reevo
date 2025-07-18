@@ -1,0 +1,10 @@
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    price_changes = df['close'].pct_change().dropna()
+    ewma_prices = price_changes.ewm(span=20).mean()
+    volume_momentum = df['volume'].pct_change().rolling(window=10).mean().dropna()
+    combined_factor = ewma_prices + volume_momentum
+    heuristics_matrix = (combined_factor - combined_factor.mean()) / combined_factor.std()
+    return heuristics_matrix

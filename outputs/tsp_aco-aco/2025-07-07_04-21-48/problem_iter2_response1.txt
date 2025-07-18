@@ -1,0 +1,33 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon to diagonal
+    eps = 1e-8
+    n_nodes = distance_matrix.shape[0]
+    distance_matrix += eps * np.eye(n_nodes)
+
+    # Base heuristic: inverse of distances (prefer shorter edges)
+    inv_distance = 1 / distance_matrix
+
+    # Local density estimation: normalize each row by sum of inverse distances
+    row_sums = inv_distance.sum(axis=1, keepdims=True)
+    normalized = inv_distance / row_sums
+
+    # Penalize nodes that are already highly attractive (column-wise importance)
+    col_sums = normalized.sum(axis=0, keepdims=True)
+    penalty = 1 + np.log(1 + col_sums)
+    penalized = normalized / penalty
+
+    # Local density adjusted: multiply by node-specific scaling factor
+    local_density_factor = 1 / (1 + np.sum(inv_distance, axis=1, keepdims=True))
+    locally_penalized = penalized * local_density_factor
+
+    # Sparsify adaptively: keep top-k outgoing edges per node where k ~ sqrt(N)
+    k = max(2, int(np.sqrt(n_nodes)))
+    for i in range(n_nodes):
+        top_k_indices = np.argsort(locally_penalized[i, :])[-k:]
+        mask = np.zeros_like(locally_penalized[i, :], dtype=bool)
+        mask[top_k_indices] = True
+        locally_penalized[i, ~mask] = 0
+
+    return locally_penalized
+```

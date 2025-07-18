@@ -1,0 +1,25 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate price momentum over the lookback window
+    lookback_window = 5
+    df['momentum'] = df.groupby(level=0)['close'].pct_change(lookback_window)
+    
+    # Compute volume shock as deviation from exponentially weighted mean
+    df['vol_shock'] = df.groupby(level=0)['volume'].apply(lambda x: (x - x.ewm(span=10).mean()) / (x.ewm(span=10).std() + 1e-7))
+    
+    # Compute high-minus-low relative to average range (normalized by trading range)
+    df['range_volatility'] = (df['high'] - df['low']) / (df['high'].rolling(window=20).max() - df['low'].rolling(window=20).min()).replace(0, 1)
+    
+    # Measure reversal effect by comparing current close with trailing median
+    df['reversal_score'] = df.groupby(level=0)['close'].apply(lambda x: (x - x.rolling(window=15).median()) / (x.rolling(window=15).std() + 1e-7))
+    
+    # Combine the components using simple scoring logic
+    factor = (
+        0.3 * df['momentum'].fillna(0) +
+        0.2 * df['vol_shock'].fillna(0) +
+        0.2 * df['range_volatility'].fillna(0) +
+        0.3 * (-df['reversal_score'].fillna(0))  # Negative for contrarian bet
+    )
+    
+    return factor
+```

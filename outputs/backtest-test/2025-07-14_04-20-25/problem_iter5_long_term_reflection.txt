@@ -1,0 +1,1 @@
+Focus on key momentum and volatility, use dynamic volume and transaction amount weights, integrate granular intraday data, and apply EMA smoothing judiciously to avoid over-smoothing.

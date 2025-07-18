@@ -1,0 +1,23 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the log returns
+    df['log_returns'] = np.log(df['close'] / df['close'].shift(1))
+    
+    # Calculate the rolling standard deviation of log returns as a measure of volatility
+    df['volatility'] = df['log_returns'].rolling(window=20, min_periods=1).std()
+    
+    # Calculate the volatility-adjusted return
+    df['vol_adj_return'] = df['log_returns'] / df['volatility']
+    
+    # Calculate the Relative Strength Index (RSI)
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14, min_periods=1).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14, min_periods=1).mean()
+    rs = gain / loss
+    df['rsi'] = 100 - (100 / (1 + rs))
+    
+    # Combine the volatility-adjusted return and RSI into a single heuristic matrix
+    heuristics_matrix = (df['vol_adj_return'] * df['rsi']).cumsum()
+    
+    return heuristics_matrix

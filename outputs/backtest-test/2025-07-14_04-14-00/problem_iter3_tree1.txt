@@ -1,0 +1,38 @@
+```txt
+Trend Strength and Intraday Alpha Factors
+├── Calculate Intraday True Range
+│   ├── High-Low Range
+│   │   ├── Use High price
+│   │   └── Use Low price
+│   ├── Previous Close Adjustment
+│   │   ├── Use Previous Close
+│   │   └── Compare with High and Low
+│   └── True Range
+│       ├── Maximum of High-Low, High-PrevClose, Low-PrevClose
+├── Smoothed Intraday Returns
+│   ├── Calculate Intraday Return
+│   │   ├── Use Open price
+│   │   └── Use Close price
+│   ├── Exponential Moving Average (EMA) of Intraday Returns
+│   │   ├── Choose a Smoothing Factor
+│   │   └── Consider Different Periods for EMA
+│   └── Combine Smoothed Returns and True Range
+│       ├── Trend Strength
+│       │   ├── Normalize Smoothed Returns by True Range
+│       └── Ensure Adaptability
+│           ├── High-Frequency Data Compatibility
+│           └── Robust Statistical Methods
+└── Volume-Weighted Price Movements
+    ├── Calculate Volume Ratio
+    │   ├── Daily Volume
+    │   └── Average Volume over N days
+    ├── Dollar-Volume Impact
+    │   ├── Use Volume
+    │   └── Multiply by Close
+    └── Integrate with Smoothed Returns
+        ├── Weighted Average
+        │   ├── Use Volume-Ratio and Dollar-Volume
+        └── Ensure Interpretability
+            ├── Maintain Simplicity
+            └── Avoid Over-Complexity
+```

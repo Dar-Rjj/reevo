@@ -1,0 +1,37 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon
+    eps = 1e-8
+    distance_matrix += eps
+
+    # Inverse distance is a basic heuristic: shorter edges are more promising
+    inv_dist = 1.0 / distance_matrix
+
+    # Penalize edges connected to nodes with high degree (used in some greedy strategies)
+    n = distance_matrix.shape[0]
+    degree_penalty = np.zeros_like(distance_matrix)
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                # Heuristic degree penalty based on number of "good" neighbors
+                # Here we consider how many edges from i and j are in the top quartile
+                threshold_i = np.percentile(inv_dist[i, :], 75)
+                threshold_j = np.percentile(inv_dist[:, j], 75)
+                deg_i = np.sum(inv_dist[i, :] > threshold_i)
+                deg_j = np.sum(inv_dist[:, j] > threshold_j)
+                degree_penalty[i, j] = 1.0 / (1 + abs(deg_i - deg_j))  # Encourage balance
+
+    # Combine inverse distance with degree penalty
+    combined = inv_dist * degree_penalty
+
+    # Normalize each row for better balance
+    row_sums = combined.sum(axis=1, keepdims=True)
+    row_sums[row_sums == 0] = 1  # Prevent division by zero
+    combined /= row_sums
+
+    # Sparsify the matrix: only keep edges that are better than median of their row
+    sparse_mask = combined < np.median(combined, axis=1, keepdims=True)
+    combined[sparse_mask] = 0.0
+
+    return combined
+```

@@ -1,0 +1,1 @@
+Combine trend, volume, and volatility with dynamic weighting. Normalize each component, use rank-based signals for stability, and integrate divergences for improved alpha. Balance sensitivity and robustness through factor ranking and adaptive scaling.

@@ -1,0 +1,33 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(data):
+    # Calculate Intraday Log Returns
+    data['open_to_close_log_return'] = np.log(data['close'] / data['open'])
+    data['high_to_low_log_range'] = np.log(data['high'] / data['low'])
+    
+    # Compute Volume-Weighted Intraday Momentum
+    total_volume = data['volume'].sum()
+    data['volume_ratio'] = data['volume'] / total_volume
+    
+    weighted_open_to_close = data['open_to_close_log_return'] * data['volume_ratio']
+    weighted_high_to_low = data['high_to_low_log_range'] * data['volume_ratio']
+    
+    data['weighted_sum_log_returns'] = weighted_open_to_close + weighted_high_to_low
+    
+    # Apply Smoothing and Trend Indicator
+    data['ema_weighted_log_returns'] = data['weighted_sum_log_returns'].ewm(span=12, adjust=False).mean()
+    data['ema_volume'] = data['volume'].ewm(span=12, adjust=False).mean()
+    
+    data['macd'] = data['ema_weighted_log_returns'].ewm(span=12, adjust=False).mean() - data['ema_weighted_log_returns'].ewm(span=26, adjust=False).mean()
+    
+    # Incorporate Volatility Adjustment
+    data['std_log_returns'] = data['weighted_sum_log_returns'].rolling(window=20).std()
+    data['volatility_adjusted_momentum'] = data['weighted_sum_log_returns'] / data['std_log_returns']
+    
+    # Final Alpha Factor
+    data['alpha_factor'] = (data['weighted_sum_log_returns'] + data['macd']) / data['std_log_returns']
+    
+    return data['alpha_factor']
+```

@@ -1,0 +1,26 @@
+[
+     {
+          "algorithm": "The algorithm computes a novel set of alpha factors by integrating trend, momentum, and volatility components from the input DataFrame's market features to predict future stock returns.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v2(df):\n    # Compute moving averages for short and long terms\n    short_window = 5\n    long_window = 20\n    df['SMA_Short'] = df['close'].rolling(window=short_window).mean()\n    df['SMA_Long'] = df['close'].rolling(window=long_window).mean()\n    \n    # Momentum factor: difference between current close and close 'n' days ago\n    n_days = 10\n    df['Momentum'] = df['close'] - df['close'].shift(n_days)\n    \n    # Volatility factor: standard deviation of daily returns over a window\n    vol_window = 30\n    df['Daily_Return'] = df['close'].pct_change()\n    df['Volatility'] = df['Daily_Return'].rolling(window=vol_window).std()\n    \n    # Combine the factors into a single heuristic score\n    df['Heuristic_Score'] = (df['SMA_Short'] - df['SMA_Long']) + df['Momentum'] - df['Volatility']\n    \n    heuristics_matrix = df['Heuristic_Score']\n    \n    return heuristics_matrix",
+          "objective": -0.01698,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm constructs a novel alpha factor by calculating the exponential weighted moving average (EWMA) of price changes, then adjusting for trading volume momentum, and finally normalizing these values to create a more interpretable heuristics matrix.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v2(df):\n    price_changes = df['close'].pct_change().dropna()\n    ewma_prices = price_changes.ewm(span=20).mean()\n    volume_momentum = df['volume'].pct_change().rolling(window=10).mean().dropna()\n    combined_factor = ewma_prices + volume_momentum\n    heuristics_matrix = (combined_factor - combined_factor.mean()) / combined_factor.std()\n    return heuristics_matrix",
+          "objective": -0.01078,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm constructs a novel set of alpha factors by combining moving averages, volatility, and trading volume indicators to predict future stock returns.",
+          "code": "import pandas as pd\nimport numpy as np\n\ndef heuristics_v2(df):\n    # Calculate short and long moving averages\n    df['SMA'] = df['close'].rolling(window=5).mean()\n    df['LMA'] = df['close'].rolling(window=20).mean()\n    \n    # Calculate price relative to SMA and LMA\n    df['Price_SMA_Relative'] = (df['close'] - df['SMA']) / df['SMA']\n    df['Price_LMA_Relative'] = (df['close'] - df['LMA']) / df['LMA']\n    \n    # Calculate volatility\n    df['Volatility'] = df['close'].pct_change().rolling(window=20).std()\n    \n    # Calculate volume relative to its 20-day moving average\n    df['Volume_Mean'] = df['volume'].rolling(window=20).mean()\n    df['Volume_Relative'] = (df['volume'] - df['Volume_Mean']) / df['Volume_Mean']\n    \n    # Combine factors into a single heuristics score\n    df['Heuristic_Score'] = (df['Price_SMA_Relative'] + df['Price_LMA_Relative'] + \n                             df['Volatility'] + df['Volume_Relative'])\n    \n    # Drop rows with NaN values\n    df.dropna(inplace=True)\n    \n    # Extract the heuristics scores\n    heuristics_matrix = df['Heuristic_Score']\n    \n    return heuristics_matrix",
+          "objective": -0.00856,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The algorithm calculates the moving average convergence divergence (MACD) of the closing prices and normalizes it with the standard deviation of volumes over a specified period, aiming to capture momentum and volatility heuristics.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    fast_ema = df['close'].ewm(span=12, adjust=False).mean()\n    slow_ema = df['close'].ewm(span=26, adjust=False).mean()\n    macd = fast_ema - slow_ema\n    signal_line = macd.ewm(span=9, adjust=False).mean()\n    macd_diff = macd - signal_line\n    volume_std = df['volume'].rolling(window=20).std()\n    heuristics_matrix = (macd_diff / volume_std).fillna(0)\n    return heuristics_matrix",
+          "objective": -0.00099,
+          "other_inf": null
+     }
+]

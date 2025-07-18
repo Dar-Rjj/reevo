@@ -1,0 +1,57 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the normalized trading volume
+    normalized_volume = (df['volume'] - df['volume'].mean()) / df['volume'].std()
+    
+    # Calculate the price change ratio
+    price_change_ratio = (df['close'] - df['open']) / (df['high'] - df['low'] + 1e-7)
+    
+    # Calculate the amount-weighted average price
+    amount_weighted_price = (df['amount'] * (df['high'] + df['low'] + df['close']) / 3) / (df['volume'] + 1e-7)
+    
+    # Calculate the relative strength index (RSI) for 14 periods
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).fillna(0)
+    loss = (-delta.where(delta < 0, 0)).fillna(0)
+    avg_gain = gain.rolling(window=14).mean()
+    avg_loss = loss.rolling(window=14).mean()
+    rs = avg_gain / (avg_loss + 1e-7)
+    rsi = 100 - (100 / (1 + rs))
+    
+    # Calculate the momentum factor over 12 periods
+    momentum = df['close'] / df['close'].shift(12) - 1
+    
+    # Calculate the moving average convergence divergence (MACD)
+    ema_12 = df['close'].ewm(span=12, adjust=False).mean()
+    ema_26 = df['close'].ewm(span=26, adjust=False).mean()
+    macd = ema_12 - ema_26
+    signal = macd.rolling(window=9).mean()
+    macd_signal_diff = macd - signal
+    
+    # Adaptive weights based on volatility (using standard deviation of returns as a proxy)
+    returns_volatility = df['close'].pct_change().rolling(window=14).std()
+    weight_volume = 1 / (returns_volatility + 1e-7)
+    weight_price_ratio = 1 / (returns_volatility + 1e-7)
+    weight_amount_weighted_price = 1 / (returns_volatility + 1e-7)
+    weight_rsi = 1 / (returns_volatility + 1e-7)
+    weight_momentum = 1 / (returns_volatility + 1e-7)
+    weight_macd = 1 / (returns_volatility + 1e-7)
+    
+    total_weight = weight_volume + weight_price_ratio + weight_amount_weighted_price + weight_rsi + weight_momentum + weight_macd
+    weight_volume /= total_weight
+    weight_price_ratio /= total_weight
+    weight_amount_weighted_price /= total_weight
+    weight_rsi /= total_weight
+    weight_momentum /= total_weight
+    weight_macd /= total_weight
+    
+    # Combine the factors into a single alpha factor with adaptive weights
+    alpha_factor = (normalized_volume * weight_volume +
+                    price_change_ratio * weight_price_ratio +
+                    amount_weighted_price * weight_amount_weighted_price +
+                    rsi * weight_rsi +
+                    momentum * weight_momentum +
+                    macd_signal_diff * weight_macd)
+    
+    return alpha_factor
+```

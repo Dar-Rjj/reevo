@@ -1,0 +1,40 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    epsilon = 1e-8
+    n = distance_matrix.shape[0]
+    
+    # Avoid zero distances and stabilize inverse
+    inv_distance = 1.0 / (distance_matrix + epsilon)
+    
+    # Local normalization: softmax-like weights over inverse distances
+    local_softmax = inv_distance / (inv_distance.sum(axis=1, keepdims=True) + epsilon)
+    
+    # Node importance: sum of row-wise and column-wise inverse distances
+    node_importance = inv_distance.sum(axis=1) + inv_distance.sum(axis=0)
+    importance_penalty = np.outer(node_importance, node_importance)
+    importance_penalty /= importance_penalty.max() + epsilon
+    
+    # Mutual proximity adjustment: reward edges where both nodes are relatively close to each other
+    row_max = inv_distance.max(axis=1, keepdims=True)
+    mutual_proximity = inv_distance * (inv_distance / (row_max + epsilon))
+    mutual_proximity = (mutual_proximity + mutual_proximity.T) / 2.0
+    
+    # Degree-aware normalization: normalize by degree to avoid oversaturation
+    degree = inv_distance.sum(axis=1)
+    degree_norm = np.outer(degree, degree)
+    degree_norm = 1.0 / (degree_norm + epsilon)
+    
+    # Combine factors: local preference, mutual proximity, and normalized degree-inverse penalty
+    combined = local_softmax * mutual_proximity * (degree_norm / importance_penalty)
+    
+    # Adaptive sparsification based on geometric mean of row/col medians
+    row_med = np.median(combined, axis=1, keepdims=True)
+    col_med = np.median(combined, axis=0, keepdims=True)
+    adaptive_threshold = np.sqrt(row_med * col_med)
+    combined[combined < adaptive_threshold] = 0
+    
+    # Symmetrize final output for consistent edge evaluation
+    combined = (combined + combined.T) / 2.0
+    
+    return combined
+```

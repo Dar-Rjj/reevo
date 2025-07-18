@@ -1,0 +1,28 @@
+```python
+import numpy as np
+
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    epsilon = 1e-8
+    dist = distance_matrix + epsilon
+
+    # Inverse distance heuristic (higher is better)
+    inv_dist = 1.0 / dist
+
+    # Compute degree of sparsity based on row/column variance
+    row_var = np.var(inv_dist, axis=1, keepdims=True)
+    col_var = np.var(inv_dist, axis=0, keepdims=True)
+    
+    # Normalize rows and columns to capture relative strength
+    row_norm = inv_dist / (np.sum(inv_dist, axis=1, keepdims=True) + epsilon)
+    col_norm = inv_dist / (np.sum(inv_dist, axis=0, keepdims=True) + epsilon)
+
+    # Combine inverse distance, relative positioning and variance
+    combined = inv_dist * (row_norm + col_norm) * (1.0 + row_var + col_var)
+
+    # Sparsify: Zero out values below a percentile threshold (e.g., bottom 30%)
+    threshold = np.percentile(combined, 30)
+    combined[combined < threshold] = 0.0
+
+    return combined
+```

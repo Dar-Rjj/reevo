@@ -1,0 +1,31 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and prevent overflow
+    epsilon = 1e-8
+    n = distance_matrix.shape[0]
+    
+    # Base heuristic: inverse of distance (favor shorter edges)
+    inv_distance = 1.0 / (distance_matrix + epsilon)
+
+    # Compute average distance for each node to its neighbors to estimate local density
+    row_avg = np.mean(inv_distance, axis=1, keepdims=True)
+    col_avg = np.mean(inv_distance, axis=0, keepdims=True)
+    
+    # Normalize local connectivity potential
+    local_density = (inv_distance > np.percentile(inv_distance, 30)).astype(float)
+
+    # Penalize nodes with already high-degree (degree heuristic), here approximated by row/col sums of the thresholded matrix
+    degree_punish_row = np.sum(local_density, axis=1, keepdims=True)
+    degree_punish_col = np.sum(local_density, axis=0, keepdims=True)
+    degree_punishment = (np.ones((n, n)) * (1.0 / (degree_punish_row + epsilon))) @ (np.ones((n, n)) * (1.0 / (degree_punish_col + epsilon)))
+
+    # Final heuristic combines inverse distance, local sparsity, degree punishment, and normalization
+    combined = inv_distance * local_density * degree_punishment
+    combined[np.eye(n, dtype=bool)] = 0  # Zero out self-loops
+    
+    # Sparsify: set all values below 5th percentile to zero to eliminate less promising edges
+    threshold = np.percentile(combined[combined > 0], 5)
+    combined[combined < threshold] = 0
+
+    return combined
+```

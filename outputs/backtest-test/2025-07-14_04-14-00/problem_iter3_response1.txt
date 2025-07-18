@@ -1,0 +1,32 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday True Range
+    df['high_low_range'] = df['high'] - df['low']
+    df['high_prev_close_range'] = df['high'] - df['close'].shift(1)
+    df['low_prev_close_range'] = abs(df['low'] - df['close'].shift(1))
+    df['true_range'] = df[['high_low_range', 'high_prev_close_range', 'low_prev_close_range']].max(axis=1)
+    
+    # Calculate Intraday Return
+    df['intraday_return'] = (df['close'] - df['open']) / df['open']
+    
+    # Exponential Moving Average (EMA) of Intraday Returns
+    df['ema_intraday_return'] = df['intraday_return'].ewm(span=10, adjust=False).mean()
+    
+    # Trend Strength: Normalize Smoothed Returns by True Range
+    df['trend_strength'] = df['ema_intraday_return'] / df['true_range']
+    
+    # Volume-Weighted Price Movements
+    df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+    df['dollar_volume'] = df['volume'] * df['close']
+    
+    # Integrate with Smoothed Returns
+    df['weighted_average'] = df['trend_strength'] * df['volume_ratio'] * df['dollar_volume']
+    
+    # Final Alpha Factor
+    alpha_factor = df['weighted_average']
+    
+    return alpha_factor
+```

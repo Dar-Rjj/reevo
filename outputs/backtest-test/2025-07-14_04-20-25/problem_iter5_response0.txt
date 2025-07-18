@@ -1,0 +1,29 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday Log Returns
+    open_to_close_log_return = np.log(df['close'] / df['open'])
+    high_to_low_log_range = np.log(df['high'] / df['low'])
+    
+    # Compute Volume-Weighted Intraday Momentum
+    volume_ratio = df['volume'] / df['volume'].sum()
+    weighted_sum_of_log_returns = (open_to_close_log_return + high_to_low_log_range) * volume_ratio
+    
+    # Apply Smoothing and Trend Indicator
+    ema_weighted_log_returns = weighted_sum_of_log_returns.ewm(span=12, adjust=False).mean()
+    ema_volume = df['volume'].ewm(span=12, adjust=False).mean()
+    macd_fast = ema_weighted_log_returns.ewm(span=12, adjust=False).mean()
+    macd_slow = ema_weighted_log_returns.ewm(span=26, adjust=False).mean()
+    macd_line = macd_fast - macd_slow
+    
+    # Incorporate Volatility Adjustment
+    log_returns = np.log(df['close'] / df['close'].shift(1))
+    std_log_returns = log_returns.rolling(window=20).std()
+    volatility_adjusted_weighted_sum = weighted_sum_of_log_returns / std_log_returns
+    
+    # Final Alpha Factor
+    alpha_factor = (ema_weighted_log_returns + macd_line) * volatility_adjusted_weighted_sum
+    return alpha_factor
+```

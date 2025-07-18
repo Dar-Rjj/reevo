@@ -1,0 +1,15 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and emphasize small distances
+    inverse_distance = 1.0 / (distance_matrix + 1e-8)
+    
+    # Normalize using the average distance for each row to adaptively scale the values
+    row_means = np.mean(inverse_distance, axis=1, keepdims=True)
+    normalized_heuristic = inverse_distance / (row_means + 1e-8)
+    
+    # Sparsify: Zero out edges that are longer than threshold (e.g., 75th percentile of each row)
+    threshold = np.percentile(normalized_heuristic, 75, axis=1, keepdims=True)
+    sparse_heuristic = np.where(normalized_heuristic >= threshold, normalized_heuristic, 0)
+    
+    return sparse_heuristic
+```

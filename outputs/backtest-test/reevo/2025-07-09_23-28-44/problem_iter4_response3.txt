@@ -1,0 +1,52 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic alpha factor combining normalized RSI, volume-weighted momentum,
+    and volatility-adjusted signals with interpretability and robustness.
+
+    Factor Interpretation:
+    - Positive values indicate strong momentum with supportive volume and low volatility
+    - Negative values suggest weakening trends or bearish divergence
+    """
+
+    # 1. Short-term RSI (Relative Strength Index) for overbought/oversold signal
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    rsi_window = 5  # Shorter window for faster signal response
+
+    avg_gain = gain.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+
+    rs = avg_gain / avg_loss.replace(0, 1e-6)
+    rsi = 100 - (100 / (1 + rs))
+
+    # 2. Volume-weighted Momentum signal
+    lookback = 5
+    raw_momentum = df['close'] - df['close'].shift(lookback)
+
+    avg_volume = df['volume'].groupby(level=0).rolling(lookback).mean().droplevel(0)
+    vol_adjustment = df['volume'] / avg_volume.clip(lower=1e-6)
+
+    volume_weighted_mom = raw_momentum * vol_adjustment
+
+    # 3. Volatility adjustment using rolling standard deviation of returns
+    returns = df['close'].pct_change()
+    vol_window = 10
+    volatility = returns.groupby(level=0).rolling(vol_window).std().droplevel(0)
+
+    # Rank-based normalization to handle outliers and distribution shifts
+    rsi_rank = rsi.rank(pct=True)
+    mom_rank = volume_weighted_mom.rank(pct=True)
+    vol_rank = volatility.rank(pct=True)
+
+    # Final Alpha Factor: Weighted combination of normalized components
+    # Emphasize momentum (45%), then RSI (35%), then inverse volatility (20%)
+    alpha_factor = (
+        0.45 * mom_rank +
+        0.35 * (1 - rsi_rank) +  # Invert RSI: lower RSI = oversold = bearish
+        0.20 * (1 - vol_rank)    # Lower volatility is better
+    )
+
+    return alpha_factor.fillna(0).clip(-3, 3)
+```

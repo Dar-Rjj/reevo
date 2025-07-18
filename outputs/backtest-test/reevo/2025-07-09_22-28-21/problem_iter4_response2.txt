@@ -1,0 +1,31 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # 1. Normalize price position within recent high-low window (momentum oscillator)
+    rolling_high = df.groupby(level=0)['high'].rolling(window=20).max().droplevel(0)
+    rolling_low = df.groupby(level=0)['low'].rolling(window=20).min().droplevel(0)
+    price_position = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # 2. Volume dynamics: z-score of volume relative to recent mean and std
+    volume_mean = df.groupby(level=0)['volume'].rolling(window=20).mean().droplevel(0)
+    volume_std = df.groupby(level=0)['volume'].rolling(window=20).std().droplevel(0)
+    volume_zscore = (df['volume'] - volume_mean) / (volume_std + 1e-7)
+
+    # 3. Adaptive signal weight based on volatility and volume conditions
+    volatility = (df.groupby(level=0)['high'].rolling(window=20).max() - 
+                  df.groupby(level=0)['low'].rolling(window=20).min()).div(df['close'].shift(1)).droplevel(0)
+    
+    # Lower weight when volatility or volume spikes (to reduce noise in uncertain environments)
+    adaptive_weight = 1.0 / (volatility.clip(lower=0.01) * (1 + volume_zscore.abs()))
+
+    # 4. Behavioral bias correction: if price is rising but volume is contracting,
+    # assume fading momentum and reduce the alpha signal
+    volume_trend = df.groupby(level=0)['volume'].pct_change(5).droplevel(0)
+    price_trend = df.groupby(level=0)['close'].pct_change(5).droplevel(0)
+    behavioral_factor = (price_trend > 0) & (volume_trend < 0)
+    adjusted_price_position = price_position.where(~behavioral_factor, price_position - 0.5)
+
+    # Final alpha: weighted combination of normalized price behavior and adaptive adjustments
+    alpha = adaptive_weight * (adjusted_price_position - 0.5)
+
+    return alpha.clip(lower=-1, upper=1)
+```

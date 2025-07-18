@@ -1,0 +1,18 @@
+import pandas as pd
+    import numpy as np
+    
+    # Calculate daily return
+    df['return'] = df['close'].pct_change()
+    # Calculate 30-day momentum
+    df['momentum_30'] = df['close'].pct_change(30)
+    # Calculate 30-day volatility
+    df['volatility_30'] = df['return'].rolling(window=30).std()
+    # Average 30-day trading volume
+    df['avg_volume_30'] = df['volume'].rolling(window=30).mean()
+    
+    # DMA factor: (Momentum + Volatility) / Avg Volume
+    df['heuristic_factor'] = (df['momentum_30'] + df['volatility_30']) / df['avg_volume_30']
+    
+    heuristics_matrix = df['heuristic_factor']
+    
+    return heuristics_matrix

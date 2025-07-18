@@ -1,0 +1,19 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate 20-day moving average of the close price
+    ma_20 = df['close'].rolling(window=20).mean()
+    # Normalize the moving average
+    normalized_ma = (ma_20 - ma_20.min()) / (ma_20.max() - ma_20.min())
+    # Apply proprietary volatility adjustment using a 20-day window
+    vol_adj = df['close'].pct_change().rolling(window=20).std(ddof=0)
+    adjusted_ma = normalized_ma * (1 + vol_adj)
+    # Calculate RSI with a 14-day period
+    daily_returns = df['close'].pct_change()
+    avg_gain = daily_returns.where(daily_returns > 0, 0).rolling(window=14).mean()
+    avg_loss = -daily_returns.where(daily_returns < 0, 0).rolling(window=14).mean()
+    rs = avg_gain / avg_loss.replace(0, 1)  # Avoid division by zero
+    rsi = 100 - (100 / (1 + rs))
+    # Generate the heuristics matrix as the final output
+    heuristics_matrix = (adjusted_ma + rsi) / 2
+    return heuristics_matrix

@@ -1,0 +1,24 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and suppress warnings
+    epsilon = 1e-8
+    
+    # Inverse distance factor
+    inv_dist = 1.0 / (distance_matrix + epsilon)
+
+    # Sparsify the matrix by thresholding based on average distance
+    avg_distance = np.mean(distance_matrix[np.triu_indices_from(distance_matrix, k=1)])
+    sparse_mask = (distance_matrix <= 1.5 * avg_distance).astype(float)
+    
+    # Local density estimation (how close other nodes are to both endpoints of this edge)
+    n_nodes = distance_matrix.shape[0]
+    row_density = np.sum((distance_matrix <= avg_distance), axis=1)
+    col_density = np.sum((distance_matrix <= avg_distance), axis=0)
+    local_density = np.outer(row_density, col_density)
+    
+    # Combine all heuristics factors: inverse distance x local density x sparsity
+    combined = inv_dist * local_density * sparse_mask
+
+    # Symmetrize the output in case internal logic made it asymmetric
+    return (combined + combined.T) / 2.0
+```

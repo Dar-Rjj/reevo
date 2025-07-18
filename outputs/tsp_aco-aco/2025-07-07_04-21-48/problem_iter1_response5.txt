@@ -1,0 +1,26 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon
+    eps = 1e-8
+    distance_matrix += eps * np.eye(len(distance_matrix))
+    
+    # Inverse distance as base heuristic
+    inv_distance = 1 / distance_matrix
+
+    # Normalize row-wise to reflect relative attractiveness
+    row_sums = inv_distance.sum(axis=1, keepdims=True)
+    normalized = inv_distance / row_sums
+
+    # Penalize edges to nodes with already high incoming edge attractiveness
+    col_sums = normalized.sum(axis=0, keepdims=True)
+    penalty_matrix = 1 + np.log(1 + col_sums)
+    penalized = normalized / penalty_matrix
+
+    # Sparsify: zero out edges whose normalized value is below a threshold (top-k like sparsity)
+    k = int(penalized.shape[0] * 0.3)  # keep top 30% of edges per node
+    for i in range(penalized.shape[0]):
+        threshold = np.sort(penalized[i, :])[-k]
+        penalized[i, penalized[i, :] < threshold] = 0
+
+    return penalized
+```

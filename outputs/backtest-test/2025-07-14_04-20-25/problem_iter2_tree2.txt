@@ -1,0 +1,50 @@
+```txt
+Multi-Timeframe High-Low Momentum and Volume Thrust with Volatility and Sentiment
+├── Calculate Multi-Timeframe High-Low Momentum
+│   ├── Use High price
+│   ├── Use Low price
+│   └── Calculate Momentum Indicators
+│       ├── Compute High-Low Range for Short-Term (10 days)
+│       ├── Compute High-Low Range for Medium-Term (50 days)
+│       └── Compute High-Low Range for Long-Term (200 days)
+│           ├── Smooth with Moving Average
+│           │   ├── Short-Term: 5-day MA
+│           │   ├── Medium-Term: 10-day MA
+│           │   └── Long-Term: 20-day MA
+├── Calculate Volume Thrust
+│   ├── Use Volume
+│   ├── Calculate Volume Moving Averages
+│   │   ├── Short-Term: 5-day MA
+│   │   ├── Medium-Term: 10-day MA
+│   │   └── Long-Term: 20-day MA
+│   └── Compute Volume Ratios
+│       ├── Latest Volume
+│       ├── Short-Term Volume MA
+│       ├── Medium-Term Volume MA
+│       └── Long-Term Volume MA
+├── Incorporate Volatility
+│   ├── Calculate Historical Volatility
+│   │   ├── Use Close Price
+│   │   ├── Compute Standard Deviation
+│   │   └── Choose a Smoothing Period
+│   │       ├── Short-Term: 10 days
+│   │       ├── Medium-Term: 50 days
+│   │       └── Long-Term: 200 days
+│   └── Normalize Volatility
+│       ├── Normalize to [0, 1]
+│       └── Adjust for Market Regimes
+├── Integrate Market Sentiment
+│   ├── Use External Sentiment Data
+│   │   ├── News Sentiment Score
+│   │   ├── Social Media Sentiment Score
+│   └── Normalize Sentiment Scores
+│       ├── Normalize to [0, 1]
+│       └── Adjust for Time Lags
+└── Combine Factors
+    ├── Multiply High-Low Momentum by Volume Thrust
+    ├── Multiply by Normalized Volatility
+    ├── Multiply by Normalized Sentiment
+    └── Interpret the Alpha Factor
+        ├── High Positive Values Suggest Strong Upward Momentum
+        └── Low Values Indicate Weak or Negative Momentum
+```

@@ -1,0 +1,22 @@
+```txt
+Average True Range Momentum Indicator
+├── Calculate True Range
+│   ├── Use High Price
+│   ├── Use Low Price
+│   └── Use Close Price from previous period (t-1)
+│       └── Select the maximum of the following:
+│           ├── High - Low
+│           ├── High - Previous Close
+│           └── Previous Close - Low
+├── Compute Average True Range over n periods
+│   ├── Sum True Ranges
+│   └── Divide by number of periods (n)
+└── Create ATR-based Momentum Factor
+    ├── Determine Direction
+    │   ├── Compare Current Close with Close from n periods ago
+    │   └── Assign 1 if up, -1 if down, or 0 if no change
+    └── Multiply Direction by ATR
+        ├── Use Direction factor
+        └── Use Average True Range
+            └── Ensure the product captures momentum with volatility adjustment
+```

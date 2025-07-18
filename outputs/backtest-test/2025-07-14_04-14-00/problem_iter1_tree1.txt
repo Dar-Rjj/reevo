@@ -1,0 +1,21 @@
+```txt
+Intraday Momentum Indicator
+├── Calculate Intraday Price Movement
+│   ├── Use High price
+│   └── Use Low price
+│       └── Subtract Low from High
+├── Calculate Relative Open-Close Position
+│   ├── Use Close price
+│   ├── Use Open price
+│   └── Subtract Open from Close
+│       └── Divide by Intraday Price Movement
+└── Combine with Volume Trend
+    ├── Calculate Volume Momentum
+    │   ├── Use Volume
+    │   ├── Lag Volume by 1
+    │   └── Subtract Lagged Volume from Current Volume
+    ├── Scale by Intraday Price Movement
+    │   └── Multiply Volume Momentum by Intraday Price Movement
+    └── Final Alpha Factor
+        └── Add Scaled Volume Momentum to Relative Open-Close Position
+```

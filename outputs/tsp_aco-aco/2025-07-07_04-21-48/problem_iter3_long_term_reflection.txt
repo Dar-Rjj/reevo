@@ -1,0 +1,1 @@
+Prioritize short, sparse edges using adaptive thresholds. Normalize local density and node importance, penalize high-attractiveness nodes. Balance sparsity with inverse distance weighting. Use mutual proximity, degree normalization, and symmetric edge evaluation for refined heuristic guidance.

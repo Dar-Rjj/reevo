@@ -1,0 +1,1 @@
+Integrate MACD for trend, volume-weighted returns for momentum, and volatility for robustness. Use relative strength and normalization for stability. Focus on key, simplified metrics for clarity.

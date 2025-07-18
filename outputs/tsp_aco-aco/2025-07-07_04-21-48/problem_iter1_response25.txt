@@ -1,0 +1,25 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon to the distance matrix
+    epsilon = 1e-8
+    safe_distance = distance_matrix + epsilon
+
+    # Inverse of distance as base heuristic (shorter edges are more promising)
+    inv_dist = 1 / safe_distance
+
+    # Sparsify: mask out edges that are longer than the row-wise mean + std threshold
+    mean_dist = np.mean(distance_matrix, axis=1, keepdims=True)
+    std_dist = np.std(distance_matrix, axis=1, keepdims=True)
+    threshold = mean_dist + std_dist
+
+    # Create a mask for promising edges (below threshold)
+    promising_mask = distance_matrix < threshold
+
+    # Combine sparsity mask and inverse distance
+    combined_heuristic = inv_dist * promising_mask
+
+    # Normalize to ensure values lie in a reasonable range
+    combined_heuristic /= np.max(combined_heuristic)
+
+    return combined_heuristic
+```

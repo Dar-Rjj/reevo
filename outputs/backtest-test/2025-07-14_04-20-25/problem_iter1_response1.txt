@@ -1,0 +1,25 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Compute rolling average of close price (short-term and long-term)
+    short_term = df['close'].rolling(window=10).mean()
+    long_term = df['close'].rolling(window=50).mean()
+
+    # Calculate momentum score
+    momentum_score = short_term - long_term
+
+    # Identify positive momentum
+    positive_momentum = momentum_score > 0
+
+    # Confirm with volume increase
+    volume_increase = df['volume'] > df['volume'].shift(1)
+
+    # Generate the final signal
+    strong_buy_signal = positive_momentum & volume_increase
+
+    # Convert the boolean series to integer values (1 for strong buy, 0 otherwise)
+    factor_values = strong_buy_signal.astype(int)
+
+    return factor_values
+```

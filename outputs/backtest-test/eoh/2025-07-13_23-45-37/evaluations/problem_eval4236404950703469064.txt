@@ -1,0 +1,22 @@
+def heuristics_v2(df):
+    # Compute moving averages for short and long terms
+    short_window = 10
+    long_window = 50
+    df['SMA_Short'] = df['close'].rolling(window=short_window).mean()
+    df['SMA_Long'] = df['close'].rolling(window=long_window).mean()
+    
+    # Momentum factor: difference between current close and close 'n' days ago
+    n_days = 20
+    df['Momentum'] = df['close'] - df['close'].shift(n_days)
+    
+    # Volatility factor: standard deviation of daily returns over a window
+    vol_window = 60
+    df['Daily_Return'] = df['close'].pct_change()
+    df['Volatility'] = df['Daily_Return'].rolling(window=vol_window).std()
+    
+    # Combine the factors into a single heuristic score with adjusted weights
+    df['Heuristic_Score'] = (df['SMA_Short'] - df['SMA_Long']) * 1.5 + df['Momentum'] * 0.8 - df['Volatility'] * 0.5
+    
+    heuristics_matrix = df['Heuristic_Score']
+    
+    return heuristics_matrix

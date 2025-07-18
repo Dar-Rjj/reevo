@@ -1,0 +1,49 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the Relative Strength Index (RSI)
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).fillna(0)
+    loss = (-delta.where(delta < 0, 0)).fillna(0)
+    
+    avg_gain = gain.rolling(window=14).mean()
+    avg_loss = loss.rolling(window=14).mean()
+    
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    
+    # Calculate a modified Directional Movement (DM) component
+    up_move = df['high'] - df['low'].shift(1)
+    down_move = df['low'] - df['high'].shift(1)
+    
+    plus_dm = up_move.where(up_move > 0, 0).fillna(0)
+    minus_dm = down_move.where(down_move > 0, 0).fillna(0)
+    
+    tr = pd.concat([df['high'] - df['low'], (df['high'] - df['close'].shift()).abs(), (df['low'] - df['close'].shift()).abs()], axis=1).max(axis=1)
+    atr = tr.rolling(window=14).mean()
+    
+    plus_di = 100 * (plus_dm.rolling(window=14).sum() / atr)
+    minus_di = 100 * (minus_dm.rolling(window=14).sum() / atr)
+    
+    dm_component = plus_di - minus_di
+    
+    # Calculate a Mean Reversion Indicator (MFI) based on volume
+    typical_price = (df['high'] + df['low'] + df['close']) / 3
+    money_flow = typical_price * df['volume']
+    positive_money_flow = money_flow.where(typical_price > typical_price.shift(1), 0).fillna(0)
+    negative_money_flow = money_flow.where(typical_price < typical_price.shift(1), 0).fillna(0)
+    
+    mfi_positive = positive_money_flow.rolling(window=14).sum()
+    mfi_negative = negative_money_flow.rolling(window=14).sum()
+    
+    mfi = 100 - (100 / (1 + (mfi_positive / mfi_negative)))
+    
+    # Normalize the indicators
+    rsi_normalized = (rsi - 50) / 50
+    dm_normalized = dm_component / 100
+    mfi_normalized = (mfi - 50) / 50
+    
+    # Combine the normalized indicators into a single heuristic score
+    heuristics_matrix = (rsi_normalized + dm_normalized + mfi_normalized).fillna(0)
+    
+    return heuristics_matrix

@@ -1,0 +1,39 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    epsilon = 1e-8
+    safe_distance = distance_matrix + epsilon
+
+    # Base heuristic: inverse of distance
+    inv_distance = 1.0 / safe_distance
+
+    num_nodes = safe_distance.shape[0]
+
+    # Determine adaptive k based on node distribution (sqrt(N) ensures sub-linear growth)
+    k = max(2, int(np.sqrt(num_nodes)))
+
+    # KNN masking with local neighborhood analysis
+    knn_mask = np.zeros_like(safe_distance, dtype=bool)
+    for i in range(num_nodes):
+        nearest_indices = np.argsort(safe_distance[i])[:k]
+        knn_mask[i, nearest_indices] = True
+
+    # Mutual neighbor enhancement: if j is in i's KNN and vice versa
+    mutual_mask = np.logical_and(knn_mask, knn_mask.T)
+
+    # Local density normalization: penalize nodes embedded in dense clusters
+    local_density = np.sum(knn_mask, axis=1, keepdims=True)
+    density_weight = 1.0 / (local_density + epsilon)
+
+    # Combine heuristic factors:
+    # - Inverse distance scaled by local density
+    # - Boost mutual neighbors
+    # - Sparsify using KNN mask
+    combined_heuristic = inv_distance * density_weight * knn_mask
+    combined_heuristic[mutual_mask] *= 1.5  # Boost mutual connections
+
+    # Thresholding: remove edges with zero or negligible weight
+    combined_heuristic *= (combined_heuristic > 1e-6)
+
+    return combined_heuristic
+```

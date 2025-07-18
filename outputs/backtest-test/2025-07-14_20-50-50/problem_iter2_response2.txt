@@ -1,0 +1,16 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the price change using close prices
+    price_change = df['close'].diff()
+    
+    # Calculate the previous close price
+    previous_close = df['close'].shift(1)
+    
+    # Divide the price change by the previous close to get the momentum
+    momentum = price_change / previous_close
+    
+    # Return the momentum as a pandas Series
+    return momentum
+```

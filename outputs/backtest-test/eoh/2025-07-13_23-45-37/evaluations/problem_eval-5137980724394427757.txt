@@ -1,0 +1,30 @@
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate short and long moving averages
+    df['SMA'] = df['close'].rolling(window=5).mean()
+    df['LMA'] = df['close'].rolling(window=20).mean()
+    
+    # Calculate price relative to SMA and LMA
+    df['Price_SMA_Relative'] = (df['close'] - df['SMA']) / df['SMA']
+    df['Price_LMA_Relative'] = (df['close'] - df['LMA']) / df['LMA']
+    
+    # Calculate volatility
+    df['Volatility'] = df['close'].pct_change().rolling(window=20).std()
+    
+    # Calculate volume relative to its 20-day moving average
+    df['Volume_Mean'] = df['volume'].rolling(window=20).mean()
+    df['Volume_Relative'] = (df['volume'] - df['Volume_Mean']) / df['Volume_Mean']
+    
+    # Combine factors into a single heuristics score
+    df['Heuristic_Score'] = (df['Price_SMA_Relative'] + df['Price_LMA_Relative'] + 
+                             df['Volatility'] + df['Volume_Relative'])
+    
+    # Drop rows with NaN values
+    df.dropna(inplace=True)
+    
+    # Extract the heuristics scores
+    heuristics_matrix = df['Heuristic_Score']
+    
+    return heuristics_matrix

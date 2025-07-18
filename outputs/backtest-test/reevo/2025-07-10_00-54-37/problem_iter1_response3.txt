@@ -1,0 +1,14 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the relative difference between close price and the weighted average of open, high, low, and close
+    w_open = 0.2
+    w_high = 0.25
+    w_low = 0.15
+    w_close = 0.4
+    weighted_avg = (w_open * df['open'] + w_high * df['high'] + w_low * df['low'] + w_close * df['close'])
+    
+    # Compute the factor as the normalized difference between close and the weighted average
+    factor = (df['close'] - weighted_avg) / (df['high'] - df['low'] + 1e-7)
+    
+    return factor
+```

@@ -1,0 +1,1 @@
+Integrate robust statistical measures, diverse market indicators, and technical signals. Use adaptive weighting and non-linear combinations. Simplify with longer lookbacks and equal weighting to balance factors and avoid overfitting.

@@ -1,0 +1,55 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Improved heuristic for generating an alpha factor by combining multiple signals:
+    - Short-term RSI for overbought/oversold detection
+    - Volume-adjusted momentum to capture trend strength
+    - Volatility adjustment to normalize across assets and time
+    - Rank-based normalization for robustness
+
+    Factor Interpretation:
+    - Positive values indicate bullish setups with volume confirmation
+    - Negative values suggest bearish or divergent behavior
+    """
+    
+    # 1. Relative Strength Index (RSI) - short-term momentum oscillator
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    rsi_window = 7
+    avg_gain = gain.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+    
+    rs = avg_gain / avg_loss.replace(0, 1e-6)
+    rsi = 100 - (100 / (1 + rs))
+    
+    # 2. Volume-adjusted Momentum signal
+    lookback = 5
+    raw_momentum = df['close'] - df['close'].shift(lookback)
+    
+    avg_volume = df['volume'].groupby(level=0).rolling(lookback).mean().droplevel(0)
+    vol_factor = df['volume'] / avg_volume.clip(lower=1e-6)
+    
+    volume_adjusted_mom = raw_momentum * vol_factor
+    
+    # 3. Volatility adjustment using rolling std of returns
+    returns = df['close'].pct_change()
+    vol_window = 10
+    volatility = returns.groupby(level=0).rolling(vol_window).std().droplevel(0)
+    
+    # Normalize components using ranking
+    rsi_rank = rsi.rank(pct=True)
+    mom_rank = volume_adjusted_mom.rank(pct=True)
+    vol_rank = volatility.rank(pct=True)
+    
+    # Final combined factor with interpretability
+    # Weights: 40% momentum, 30% RSI, 30% volatility inverse (lower volatility preferred)
+    combined_factor = (
+        0.4 * mom_rank +
+        0.3 * (1 - rsi_rank) +  # Invert RSI so lower values are better
+        0.3 * (1 - vol_rank)    # Prefer lower volatility
+    )
+    
+    return combined_factor.fillna(0).clip(-3, 3)
+```

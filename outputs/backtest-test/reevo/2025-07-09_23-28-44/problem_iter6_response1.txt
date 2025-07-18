@@ -1,0 +1,82 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic alpha factor incorporating:
+    - Dynamic normalization of momentum using adaptive lookback windows
+    - Volume-weighted momentum with smoothing to avoid extreme values
+    - Adaptive volatility scaling based on regime detection
+    - Interpretable signal blending with robust ranking
+
+    Factor Interpretation:
+    - Positive values indicate strong, volume-confirmed momentum in low-volatility regimes
+    - Negative values suggest weakening momentum or high-volatility divergence
+    """
+
+    # 1. Short-term RSI (adaptive window based on volatility regime)
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    # Estimate volatility regime for adaptive RSI window (shorter in high vol, longer in low vol)
+    returns = df['close'].pct_change()
+    rolling_vol = returns.groupby(level=0).rolling(10).std().droplevel(0)
+    vol_rank = rolling_vol.rank(pct=True)
+    
+    # Map volatility rank to RSI window length (3 to 14)
+    rsi_window = (vol_rank * 11 + 3).astype(int).clip(3, 14)
+
+    # Compute RSI with per-ticker dynamic window
+    avg_gain = gain.groupby(level=0).apply(
+        lambda x: x.rolling(window=rsi_window.loc[x.index].iloc[0]).mean()
+    ).droplevel(0)
+    avg_loss = loss.groupby(level=0).apply(
+        lambda x: x.rolling(window=rsi_window.loc[x.index].iloc[0]).mean()
+    ).droplevel(0).replace(0, 1e-6)
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+
+    # 2. Volume-adjusted Momentum with dynamic lookback
+    base_lookback = 5
+    vol_scaled_lookback = (vol_rank * 10 + base_lookback).astype(int).clip(5, 15)
+
+    raw_momentum = df['close'] - df['close'].groupby(level=0).apply(
+        lambda x: x.shift(vol_scaled_lookback.loc[x.index].iloc[0])
+    ).droplevel(0)
+
+    # Volume adjustment factor with logarithmic scaling
+    avg_volume = df['volume'].groupby(level=0).rolling(10).mean().droplevel(0)
+    vol_ratio = df['volume'] / avg_volume.clip(lower=1e-6)
+    log_vol_adjustment = np.log1p(vol_ratio)  # Smoothens large volume spikes
+
+    volume_adjusted_mom = raw_momentum * log_vol_adjustment
+
+    # 3. Adaptive volatility scaling based on regime
+    def regime_based_vol(x):
+        # Calculate rolling volatility percentiles
+        vol_series = x.pct_change().rolling(10).std()
+        regime = pd.qcut(vol_series.rank(method='first'), q=4, labels=[1, 2, 3, 4])
+        regime_vol = x.pct_change().rolling(5 + (regime * 2)).std()
+        return regime_vol
+
+    adaptive_volatility = df['close'].groupby(level=0).apply(regime_based_vol).droplevel(0)
+
+    normalized_returns = returns / adaptive_volatility.clip(lower=1e-6)
+
+    # 4. Normalize components via ranking within date groups
+    def cross_sectional_rank(series):
+        return series.groupby(level=1).rank(pct=True)
+
+    rsi_rank = cross_sectional_rank(rsi)
+    mom_rank = cross_sectional_rank(volume_adjusted_mom)
+    vol_rank = cross_sectional_rank(normalized_returns)
+
+    # Final Factor (Weights: 50% Mom, 30% RSI, 20% Vol Adj)
+    combined_factor = (
+        0.5 * mom_rank +
+        0.3 * (1 - rsi_rank) +  # Invert RSI so oversold (good) gets higher weight
+        0.2 * (1 - vol_rank)    # Prefer stable returns (lower normalized volatility)
+    )
+
+    return combined_factor.fillna(0).clip(-3, 3)
+```

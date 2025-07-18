@@ -1,0 +1,38 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and ensure numerical stability
+    epsilon = 1e-8
+    n = distance_matrix.shape[0]
+    
+    # Base heuristic: inverse of distance (more promising edges have higher values)
+    inv_distance = 1.0 / (distance_matrix + epsilon)
+    
+    # Local density normalization: normalize inverse distances row-wise and column-wise
+    row_norm = inv_distance / (inv_distance.sum(axis=1, keepdims=True) + epsilon)
+    col_norm = inv_distance / (inv_distance.sum(axis=0, keepdims=True) + epsilon)
+    local_density_norm = (row_norm + col_norm) / 2.0
+    
+    # Node importance: total connectivity strength per node (sum of inverse distances)
+    node_importance = inv_distance.sum(axis=1)
+    # Outer product to penalize edges between high-importance nodes
+    importance_penalty = np.outer(node_importance, node_importance)
+    importance_penalty /= (importance_penalty.max() + epsilon)  # Normalize
+
+    # Mutual proximity factor: how uniquely short is this edge compared to others
+    mutual_proximity = inv_distance * (1.0 / (np.sort(inv_distance, axis=1)[:, -2:-1] + epsilon))
+    mutual_proximity = mutual_proximity.mean(axis=1, keepdims=True)
+    mutual_proximity_factor = mutual_proximity * mutual_proximity.T
+    
+    # Combine heuristics with balanced weights
+    combined = local_density_norm * inv_distance * mutual_proximity_factor
+    combined /= (importance_penalty + 1.0)  # Penalize connections between important nodes
+
+    # Adaptive sparsification: eliminate less promising edges using percentile thresholding
+    threshold = np.percentile(combined[np.triu_indices(n, k=1)], 35)  # Higher percentile for stricter sparsification
+    combined[combined < threshold] = 0
+    
+    # Symmetrize the matrix to maintain consistent bidirectional evaluation
+    combined = (combined + combined.T) / 2.0
+    
+    return combined
+```

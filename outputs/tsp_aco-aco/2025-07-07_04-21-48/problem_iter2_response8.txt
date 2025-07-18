@@ -1,0 +1,34 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    distance_matrix += eps
+
+    n = distance_matrix.shape[0]
+
+    # Base heuristic: inverse of the distances (favor shorter edges)
+    inv_dist = 1.0 / distance_matrix
+
+    # Row-wise and column-wise inverse distance sums to compute node-level accessibility
+    row_weights = np.sum(inv_dist, axis=1, keepdims=True)
+    col_weights = np.sum(inv_dist, axis=0, keepdims=True)
+
+    # Normalize the weights to form a probability-like distribution
+    row_probs = row_weights / (np.sum(row_weights) + eps)
+    col_probs = col_weights / (np.sum(col_weights) + eps)
+
+    # Outer product to get edge-level priority scores
+    priority_scores = np.outer(row_probs.flatten(), col_probs.flatten())
+
+    # Combine with inverse distances for final heuristic
+    combined = inv_dist * priority_scores
+
+    # Zero out self-loops
+    np.fill_diagonal(combined, 0.0)
+
+    # Sparsify: set values below a certain percentile to zero to focus on most promising edges
+    threshold = np.percentile(combined[np.triu_indices_from(combined, k=1)], 25)
+    combined[combined < threshold] = 0.0
+
+    return combined
+```

@@ -1,0 +1,20 @@
+```txt
+Daily Momentum Reversal Factor
+├── Calculate Daily Log Return
+│   ├── Use Close price of today
+│   └── Use Close price of yesterday
+├── Sum of Squared Log Returns
+│   └── For each day in the past 5 days
+│       ├── Calculate Daily Log Return for that day
+│       └── Square the Daily Log Return
+├── Subtract Cumulative Average Log Return
+│   ├── Calculate Average Log Return
+│   │   └── For each day in the past 5 days
+│   │       └── Calculate Daily Log Return for that day
+│   └── Subtract this average from the sum of squared log returns
+└── Multiply by Volume Ratio
+    ├── Calculate Volume Ratio
+    │   ├── Use Volume of today
+    │   └── Use Average Volume of the past 5 days
+    └── Multiply the result by the Volume Ratio
+```

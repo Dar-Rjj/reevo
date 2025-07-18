@@ -1,0 +1,83 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic alpha factor combining:
+    - Adaptive RSI with dynamic overbought/oversold thresholds
+    - Time-decay volume-weighted momentum
+    - Regime-aware volatility scaling
+    - Rank-based normalization with outlier clipping
+    - Time-series stability through exponential smoothing
+
+    Factor Interpretation:
+    - Positive values indicate strong, confirmed momentum with supportive volume and low relative volatility
+    - Negative values signal weakening trends, divergences, or high uncertainty
+    """
+
+    # 1. Adaptive RSI with dynamic thresholds
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    # Dynamic window based on regime volatility
+    vol_regime_window = 20
+    returns_vol = df['close'].pct_change().groupby(level=0).rolling(vol_regime_window).std().droplevel(0)
+    rsi_window = (5 + (vol_regime_window * (1 - vol_regime_window / 60))).astype(int).clip(3, 10)
+
+    def dynamic_rsi(group):
+        ticker = group.index[0][0] if isinstance(group.index[0], tuple) else None
+        win = rsi_window.loc[group.index].mode().iloc[0] if ticker else 5
+        return group.diff().pipe(lambda d: {
+            'gain': d.where(d > 0, 0),
+            'loss': -d.where(d < 0, 0)
+        }).apply(lambda x: x.groupby(level=0).rolling(win).mean().droplevel(0))
+
+    avg_gain = gain.groupby(level=0).apply(lambda g: g.rolling(5).mean()).droplevel(0)
+    avg_loss = loss.groupby(level=0).apply(lambda g: g.rolling(5).mean()).droplevel(0)
+
+    rs = avg_gain / avg_loss.replace(0, 1e-6)
+    rsi = 100 - (100 / (1 + rs))
+
+    # Dynamic thresholds based on rolling percentiles
+    rsi_lower = rsi.groupby(level=0).rolling(20).quantile(0.2).droplevel(0)
+    rsi_upper = rsi.groupby(level=0).rolling(20).quantile(0.8).droplevel(0)
+    normalized_rsi = (rsi - rsi_lower) / (rsi_upper - rsi_lower).clip(lower=1e-6)
+
+    # 2. Time-Decay Volume Weighted Momentum
+    lookback = 5
+    raw_momentum = df['close'] - df['close'].shift(lookback)
+
+    # Exponential volume weighting
+    volume_decay = df['volume'].groupby(level=0).apply(
+        lambda x: x.ewm(span=lookback, adjust=False).mean()
+    ).droplevel(0)
+
+    vol_ratio = df['volume'] / volume_decay.clip(lower=1e-6)
+    vol_weight = vol_ratio ** 0.5  # Sublinear scaling to avoid explosion
+
+    volume_weighted_mom = raw_momentum * vol_weight
+
+    # 3. Regime-Aware Volatility Scaling
+    returns = df['close'].pct_change()
+    short_vol = returns.groupby(level=0).rolling(5).std().droplevel(0)
+    long_vol = returns.groupby(level=0).rolling(20).std().droplevel(0)
+
+    # Regime detection: 1 for low vol, 0 for high vol
+    regime_indicator = (short_vol / long_vol.clip(lower=1e-6)).clip(0, 1)
+
+    # Normalize returns by adaptive volatility
+    adaptive_vol = short_vol * (1 - regime_indicator) + long_vol * regime_indicator
+    normalized_returns = returns / adaptive_vol.clip(lower=1e-6)
+
+    # 4. Trend Confirmation with curvature
+    sma_10 = df.groupby(level=0)['close'].transform(lambda x: x.rolling(10).mean())
+    trend_strength = (df['close'] - sma_10) / sma_10.clip(lower=1e-6)
+    trend_acceleration = trend_strength.pct_change(fill_method=None)
+
+    # Rank-based normalization across tickers
+    def robust_rank(series):
+        zscore = (series - series.groupby(level=1).mean()) / series.groupby(level=1).std().clip(lower=1e-6)
+        clipped = zscore.clip(-3, 3)
+        return clipped.groupby(level=1).rank(pct=True, na_option='keep')
+
+    rsi_rank = robust_rank(normalized_rsi)
+    mom_rank

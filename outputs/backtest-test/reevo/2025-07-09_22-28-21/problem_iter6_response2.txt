@@ -1,0 +1,48 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # 1. Adaptive lookback based on regime volatility using ATR
+    atr_length = 14
+    price_range = df['high'] - df['low']
+    atr = price_range.rolling(window=atr_length).mean()
+
+    # Dynamic window sizing: higher ATR leads to shorter effective lookback
+    base_lookback = 20
+    volatility_adjusted_lookback = (base_lookback * (1 + 2 * (atr / atr.mean()))).clip(5, 60).astype(int)
+
+    # Custom rolling function for dynamic lookback per row
+    def dynamic_rolling(series, window):
+        return series.rolling(window=min(window), min_periods=window)
+
+    # Dynamic normalized price position within the recent range
+    rolling_high = df['high'].rolling(volatility_adjusted_lookback)
+    rolling_low = df['low'].rolling(volatility_adjusted_lookback)
+    normalized_price = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # 2. Momentum confirmation with adaptive period based on volatility regime
+    momentum_period = (volatility_adjusted_lookback / 2).clip(3, 30).astype(int)
+    returns = df['close'].pct_change(periods=momentum_period)
+    trend_confirmation = (returns > 0).map({True: 1, False: -1})
+
+    # 3. Volume deviation from baseline with exponential weighting in trending regimes
+    volume_baseline = df['volume'].ewm(span=volatility_adjusted_lookback.mean(), adjust=False).mean()
+    volume_deviation = (df['volume'] - volume_baseline) / (df['volume'].std() + 1e-7)
+    volume_impact = volume_deviation * trend_confirmation
+
+    # Clip extreme values to reduce outlier impact
+    volume_impact = volume_impact.clip(-2, 2)
+
+    # 4. Adaptive weighting between price and volume signals based on volatility regime
+    high_volatility_regime = atr > atr.quantile(0.75)
+    weight_price = pd.Series(0.7, index=df.index)
+    weight_volume = pd.Series(0.3, index=df.index)
+
+    # In high volatility, increase weight on volume as it reflects conviction
+    weight_price[high_volatility_regime] = 0.4
+    weight_volume[high_volatility_regime] = 0.6
+
+    # Normalize composite signal
+    alpha = (normalized_price * weight_price) + (volume_impact * weight_volume)
+    alpha = (alpha - alpha.mean()) / (alpha.std() + 1e-7)
+
+    return alpha.clip(lower=-1, upper=1)
+```

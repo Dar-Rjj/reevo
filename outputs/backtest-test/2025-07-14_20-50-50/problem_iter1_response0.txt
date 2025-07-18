@@ -1,0 +1,19 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df, N=10, M=30):
+    # Calculate Daily Return
+    daily_return = df['close'].pct_change()
+    
+    # Calculate Short-Term EMA
+    short_term_ema = daily_return.ewm(span=N, adjust=False).mean()
+    
+    # Calculate Volume Factor
+    volume_sum = df['volume'].rolling(window=M).sum()
+    volume_factor = volume_sum / M
+    
+    # Multiply by Volume Factor
+    factor_values = short_term_ema * volume_factor
+    
+    return factor_values
+```

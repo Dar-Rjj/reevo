@@ -1,0 +1,4 @@
+Incorporate trend, volume, and volatility with dynamic weights. Use normalization and ranking for interpretability.
+Incorporate volume divergence, normalize signals, and combine multiple factors like RSI, momentum, and volatility for robust predictions.
+Incorporate trend, volume, and volatility; normalize components; use ranking for stability; balance sensitivity and robustness.
+Incorporate trend, volume, and volatility; normalize components; use ranks for robustness; balance weights.

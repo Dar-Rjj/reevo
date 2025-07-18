@@ -1,0 +1,31 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Price position in rolling window (adaptive to short-term price action)
+    lookback = 10
+    rolling_high = df['high'].rolling(window=lookback).max()
+    rolling_low = df['low'].rolling(window=lookback).min()
+    normalized_price = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # Volume deviation from adaptive mean with smoothing and outlier capping
+    avg_volume = df['volume'].rolling(window=lookback).mean()
+    volume_deviation = (df['volume'] - avg_volume) / (avg_volume + 1e-7)
+    smoothed_volume = volume_deviation.clip(-2, 2)  # Reduce extreme values impact
+
+    # Inverse volatility weighting based on dynamic rolling range
+    volatility = (rolling_high - rolling_low) / df['close'].shift(1)
+    inv_volatility_weight = 1.0 / (volatility + 1e-7)
+
+    # Adaptive momentum component: recent returns scaled by volatility
+    returns = df['close'].pct_change(periods=5)
+    risk_adjusted_return = returns / (volatility + 1e-7)
+
+    # Combine components with interpretable weights
+    alpha = inv_volatility_weight * (
+        normalized_price * 0.5 +
+        smoothed_volume * 0.3 +
+        risk_adjusted_return * 0.2
+    )
+
+    # Final normalization and clipping for stability
+    return alpha.clip(lower=-1, upper=1)
+```

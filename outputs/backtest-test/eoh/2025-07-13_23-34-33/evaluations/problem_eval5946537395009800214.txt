@@ -1,0 +1,16 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate the momentum of closing prices
+    close_momentum = df['close'].pct_change(periods=20)
+    
+    # Calculate the relative strength of volume
+    volume_strength = (df['volume'] - df['volume'].rolling(window=20).mean()) / df['volume'].rolling(window=20).std()
+    
+    # Calculate the relative strength of amount
+    amount_strength = (df['amount'] - df['amount'].rolling(window=20).mean()) / df['amount'].rolling(window=20).std()
+    
+    # Combine all factors into a single heuristic
+    heuristics_matrix = 0.5 * close_momentum + 0.25 * volume_strength + 0.25 * amount_strength
+    
+    return heuristics_matrix

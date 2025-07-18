@@ -1,0 +1,4 @@
+Focus on volatility, momentum, and trading activity. Simplify calculations, and consider multiple EMA periods for adaptability.
+Focus on volatility, momentum, and trading activity; simplify calculations; avoid over-complexity.
+Focus on intraday volatility, momentum, and volume-weighted price for enhanced predictability and interpretability.
+Incorporate EMA for smoothing, use volume and intraday volatility, and consider multiple periods for robustness.

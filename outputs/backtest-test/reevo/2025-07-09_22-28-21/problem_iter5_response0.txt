@@ -1,0 +1,34 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Price position in adaptive lookback window, emphasizing recent prices
+    lookback = 20
+    weights = np.linspace(1, 2, lookback)
+    rolling_high = df.groupby(level=1, group_keys=False)['high'].apply(lambda x: x.rolling(lookback).apply(lambda y: np.dot(y, weights).sum() / weights.sum(), raw=True))
+    rolling_low = df.groupby(level=1, group_keys=False)['low'].apply(lambda x: x.rolling(lookback).apply(lambda y: np.dot(y, weights).sum() / weights.sum(), raw=True))
+    normalized_price = (df['close'] - rolling_low) / (rolling_high - rolling_low + 1e-7)
+
+    # Volume deviation from regime-specific baseline using exponential smoothing
+    def regime_volatility(prices):
+        return prices.pct_change().abs().ewm(span=10).mean()
+    
+    volatility_regime = df.groupby(level=0, group_keys=False)['close'].apply(regime_volatility)
+    volume_regime = df.groupby(level=0, group_keys=False)['volume'].apply(lambda x: x.ewm(span=10).mean())
+    volume_ratio = df['volume'] / (volume_regime + 1e-7)
+    smoothed_volume = volume_ratio.clip(lower=0.3, upper=3.0)
+
+    # Behavioral component: price momentum adjusted for sentiment asymmetry
+    short_term_mom = df['close'].pct_change(periods=5)
+    long_term_mom = df['close'].pct_change(periods=60)
+    behavioral_signal = np.sign(long_term_mom) * short_term_mom
+
+    # Regime-adaptive weighting combining volatility and behavioral cues
+    volatility_weight = 1.0 / (volatility_regime + 1e-7)
+    volatility_weight /= volatility_weight.mean()
+    behavioral_weight = 1 + np.clip(behavioral_signal, -1, 1)
+
+    # Composite alpha factor with dynamic regime sensitivity
+    alpha = (normalized_price * 0.5 + smoothed_volume * 0.3 + behavioral_signal * 0.2) \
+            * (volatility_weight * 0.6 + behavioral_weight * 0.4)
+
+    return alpha.clip(lower=-1, upper=1)
+```

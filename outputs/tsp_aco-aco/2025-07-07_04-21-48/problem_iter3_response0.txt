@@ -1,0 +1,35 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and small distances causing numerical instability
+    epsilon = 1e-8
+    n = distance_matrix.shape[0]
+    
+    # Base heuristic: inverse of distance (higher is better)
+    inv_distance = 1.0 / (distance_matrix + epsilon)
+    
+    # Local density normalization: row-wise softmax to emphasize relative edge attractiveness
+    local_density = inv_distance / (inv_distance.sum(axis=1, keepdims=True) + epsilon)
+    
+    # Node importance: sum of incoming and outgoing inverse distances
+    node_importance = inv_distance.sum(axis=0) + inv_distance.sum(axis=1)
+    # Penalize edges from/to high-importance nodes using outer product
+    importance_penalty = np.outer(node_importance, node_importance)
+    importance_penalty /= (importance_penalty.max() + epsilon)  # Normalize
+    
+    # Mutual proximity adjustment: geometric mean of pairwise inverse distances
+    mutual_proximity = np.sqrt(inv_distance * inv_distance.T)
+    
+    # Combine heuristics: local_density * mutual_proximity * inverse importance penalty
+    combined = local_density * mutual_proximity * (1.0 / (importance_penalty + 1.0))
+    
+    # Adaptive sparsification: soft thresholding based on median and variance
+    upper_tri = combined[np.triu_indices(n, k=1)]
+    adaptive_threshold = np.median(upper_tri) + 0.5 * np.std(upper_tri)
+    combined[combined < adaptive_threshold] = 0
+    
+    # Symmetrize and renormalize final output for consistency
+    combined = (combined + combined.T) / 2.0
+    combined /= (combined.sum() + epsilon)
+    
+    return combined
+```

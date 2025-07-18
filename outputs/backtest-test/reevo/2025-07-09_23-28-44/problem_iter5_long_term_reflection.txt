@@ -1,0 +1,1 @@
+Incorporate volume-adjusted momentum with adaptive lookback periods. Use rank-normalized signals, shorter RSI windows, and volatility weighting. Balance trend strength with risk measures. Prioritize interpretability, ensure robustness across regimes through dynamic scaling and divergence integration.

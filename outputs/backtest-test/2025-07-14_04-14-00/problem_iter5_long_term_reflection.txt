@@ -1,0 +1,1 @@
+Integrate EMA for smoothing, focus on intraday volatility and momentum. Use volume-weighted price, multiple EMA periods, and ATR for normalization. Ensure simplicity and robustness for high-frequency data.

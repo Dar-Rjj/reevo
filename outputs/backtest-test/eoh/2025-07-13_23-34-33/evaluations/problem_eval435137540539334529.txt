@@ -1,0 +1,26 @@
+import pandas as pd
+import numpy as np
+from scipy.optimize import minimize
+
+def heuristics_v2(df):
+    # Standardize the input data
+    df_standardized = (df - df.mean()) / df.std()
+    
+    def objective_function(weights):
+        # Calculate the factor values
+        factor_values = (df_standardized * weights).sum(axis=1)
+        # The objective is to maximize the Sharpe ratio, here we use negative to minimize
+        returns = df['close'].pct_change().shift(-1).dropna()
+        aligned_factor_values = factor_values.loc[returns.index]
+        portfolio_returns = (aligned_factor_values * returns).mean()
+        portfolio_volatility = aligned_factor_values.std()
+        sharpe_ratio = portfolio_returns / portfolio_volatility if portfolio_volatility > 0 else 0
+        return -sharpe_ratio
+    
+    initial_weights = np.ones(len(df.columns)) / len(df.columns)
+    bounds = [(0, 1) for _ in range(len(df.columns))]  # Weights between 0 and 1
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})  # Weights must sum to 1
+    result = minimize(objective_function, initial_weights, method='SLSQP', bounds=bounds, constraints=constraints)
+    
+    heuristics_matrix = (df_standardized * result.x).sum(axis=1)
+    return heuristics_matrix

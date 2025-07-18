@@ -1,0 +1,28 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and suppress warnings
+    np.seterr(divide='ignore', invalid='ignore')
+    
+    # Inverse distance as a basic heuristic (closer nodes are more likely to be connected)
+    inv_distance = 1.0 / distance_matrix
+
+    # Compute row and column sums to estimate node accessibility
+    row_sums = np.sum(inv_distance, axis=1, keepdims=True)
+    col_sums = np.sum(inv_distance, axis=0, keepdims=True)
+
+    # Normalize the inverse distance by row and column sums for global context
+    normalized_weights = inv_distance / (row_sums + col_sums)
+
+    # Penalize high-degree nodes by node degree approximation (sum of selected edge weights)
+    degree_penalty = 1.0 / (np.sum(normalized_weights, axis=1, keepdims=True) + 
+                            np.sum(normalized_weights, axis=0, keepdims=True))
+
+    # Combine inverse distance, normalization, and degree penalty
+    combined_score = normalized_weights * degree_penalty
+
+    # Apply thresholding to sparsify the matrix
+    threshold = np.percentile(combined_score[combined_score > 0], 75)
+    sparse_combined_score = np.where(combined_score >= threshold, combined_score, 0)
+
+    return sparse_combined_score
+```

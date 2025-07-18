@@ -1,0 +1,38 @@
+```python
+import numpy as np
+
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    dist_safe = distance_matrix + eps
+    
+    # Inverse distance (basic prior)
+    inv_dist = 1.0 / dist_safe
+    
+    # Normalize each row to get relative comparisons per node
+    row_sums = inv_dist.sum(axis=1, keepdims=True)
+    row_normalized = inv_dist / (row_sums + eps)
+
+    # Normalize each column to factor in global edge importance
+    col_sums = inv_dist.sum(axis=0, keepdims=True)
+    col_normalized = inv_dist / (col_sums + eps)
+
+    # Combine row and column normalized values as combined centrality measure
+    centrality = (row_normalized + col_normalized) / 2.0
+
+    # Penalize high-degree nodes: reduce heuristic value for edges from nodes already connected to many other close nodes
+    degree_weights = np.zeros_like(dist_safe)
+    for i in range(dist_safe.shape[0]):
+        neighbor_ranks = np.argsort(dist_safe[i])
+        degree_weights[i, neighbor_ranks] = 1.0 / (np.arange(len(neighbor_ranks)) + 1)
+
+    # Normalize degree weights and combine with centrality
+    degree_weighted = degree_weights / (degree_weights.sum(axis=None, keepdims=True) + eps)
+    combined_heuristic = centrality * 0.6 + degree_weighted * 0.4
+
+    # Sparsify: set entries below a threshold to 0 to discourage considering poor candidates
+    threshold = np.percentile(combined_heuristic[combined_heuristic > 0], 30)  # top 70% only
+    sparse_heuristic = np.where(combined_heuristic >= threshold, combined_heuristic, 0.0)
+
+    return sparse_heuristic
+```

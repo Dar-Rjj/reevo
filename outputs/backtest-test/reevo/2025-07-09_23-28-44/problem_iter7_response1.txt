@@ -1,0 +1,71 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic for generating an adaptive alpha factor with:
+    - Dynamic lookback periods based on regime volatility
+    - Volume-weighted momentum scaled by relative volume percentiles
+    - Rank-based normalization and volatility-adjusted scaling
+    - Regime-aware outlier handling via interquartile bounds
+
+    Factor Interpretation:
+    - Positive values indicate strong, volume-confirmed momentum in low-vol regimes
+    - Negative values suggest weakening trends or overextended price action
+    """
+    
+    # 1. Adaptive Lookback based on Rolling Volatility Regime
+    returns = df['close'].pct_change()
+    vol_window = 20
+    asset_volatility = returns.groupby(level=0).rolling(vol_window).std().droplevel(0)
+    
+    # Normalize volatility to determine regime (high/low)
+    vol_rank = asset_volatility.rank(pct=True)
+    regime_quantile = vol_rank.groupby(level=1).transform(lambda x: x.quantile(0.75))  # Top quartile as high vol threshold
+    
+    dynamic_lookback = (vol_window * (1 + (asset_volatility / regime_quantile.clip(lower=1e-6)))).fillna(vol_window).astype(int)
+    dynamic_lookback = dynamic_lookback.clip(lower=3, upper=40)  # Clamp between 3 and 40 days
+
+    # 2. Volume-Weighted Momentum with Adaptive Lookback
+    def group_shift(group, lb):
+        return group.shift(periods=lb)
+
+    lookback_momentum = df['close'] - df['close'].groupby(level=0).transform(group_shift, lb=dynamic_lookback)
+
+    # Relative volume percentile across assets and time
+    rel_volume = df['volume'].groupby(level=1).rank(pct=True)  # Daily cross-sectional percentile
+    avg_volume = df['volume'].groupby(level=0).rolling(10).mean().droplevel(0)
+    vol_volume_ratio = df['volume'] / avg_volume.clip(lower=1e-6)
+
+    # Momentum strength scaled by relative and normalized volume
+    volume_scaled_momentum = lookback_momentum * vol_volume_ratio
+
+    # 3. Normalized Components using Rank-Based Scaling
+    mom_rank = volume_scaled_momentum.groupby(level=1).rank(pct=True)
+    rsi_period = 7
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0).groupby(level=0).rolling(rsi_period).mean().droplevel(0)
+    loss = -delta.where(delta < 0, 0).groupby(level=0).rolling(rsi_period).mean().droplevel(0)
+    rs = gain / loss.replace(0, 1e-6)
+    rsi = 100 - (100 / (1 + rs))
+    rsi_rank = rsi.groupby(level=1).rank(pct=True)
+
+    # 4. Adaptive Regime Scaling using IQR Clipping
+    def iqr_clip(series, group):
+        q1 = series.groupby(group).transform(lambda x: x.quantile(0.25))
+        q3 = series.groupby(group).transform(lambda x: x.quantile(0.75))
+        iqr = q3 - q1
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+        return series.clip(lower=lower, upper=upper)
+    
+    mom_rank_clipped = iqr_clip(mom_rank, level=1)
+    rsi_rank_clipped = iqr_clip(rsi_rank, level=1)
+
+    # Final Alpha Factor with adaptive scaling
+    combined_factor = (
+        0.5 * (mom_rank_clipped - 0.5) * 2 +      # Center around zero
+        0.3 * (0.5 - rsi_rank_clipped) * 2 +     # Bearish when RSI high
+        0.2 * (1 - vol_rank.clip(0, 1))          # Prefer low-volatility stocks
+    )
+
+    return combined_factor.fillna(0).clip(-3, 3)
+```

@@ -1,0 +1,40 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the relative difference between close price and the weighted average of open, high, low, and close
+    w_open = 0.2
+    w_high = 0.25
+    w_low = 0.15
+    w_close = 0.4
+    weighted_avg = (w_open * df['open'] + w_high * df['high'] + w_low * df['low'] + w_close * df['close'])
+    
+    # Compute the factor as the normalized difference between close and the weighted average
+    factor = (df['close'] - weighted_avg) / (df['high'] - df['low'] + 1e-7)
+    
+    # Calculate the 20-day moving average of the closing price
+    df['ma_20'] = df.groupby(level=0)['close'].transform(lambda x: x.rolling(window=20).mean())
+    
+    # Calculate the 20-day moving standard deviation of the closing price
+    df['std_20'] = df.groupby(level=0)['close'].transform(lambda x: x.rolling(window=20).std())
+    
+    # Calculate the Z-score for the closing price
+    df['z_score'] = (df['close'] - df['ma_20']) / df['std_20']
+    
+    # Adaptive weights based on the Z-score
+    adaptive_weight = 1 / (1 + df['z_score'].abs())
+    df['adaptive_weight'] = adaptive_weight / adaptive_weight.sum()
+    
+    # Calculate the momentum factor
+    df['momentum'] = df.groupby(level=0)['close'].diff()
+    
+    # Calculate the relative position of the close price within the high-low range, normalized by the average volume
+    df['position_strength'] = ((df['close'] - df['low']) / (df['high'] - df['low'] + 1e-7)) * (1/df['volume'])
+    
+    # Combine the factors using adaptive weights
+    combined_factor = (df['momentum'] * df['adaptive_weight'] + 
+                       df['position_strength'] * (1 - df['adaptive_weight']) + 
+                       factor * (1 - df['adaptive_weight']))
+    
+    return combined_factor
+```

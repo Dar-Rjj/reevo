@@ -1,0 +1,22 @@
+```txt
+Cumulative Intraday Momentum Oscillator (CIMO)
+├── Calculate Log Returns
+│   ├── Daily Log Open to Close Return
+│   │   ├── Use Close price
+│   │   └── Use Open price
+│   ├── Daily Log High to Low Range
+│   │   ├── Use High price
+│   │   └── Use Low price
+└── Compute CIMO
+    ├── Weighted Sum of Log Returns
+    │   ├── Weights by Volume Ratio
+    │   │   ├── Use Volume
+    │   │   └── Normalize by Total Volume
+    ├── Smoothing Factor
+    │   ├── Exponential Moving Average (EMA)
+    │   │   ├── EMA of Log Returns
+    │   │   └── EMA of Volume
+    └── Standard Deviation Adjustment
+        ├── Standard Deviation of Log Returns
+        └── Apply to Weighted Sum
+```

@@ -1,0 +1,44 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # High-to-Low Range Over Close
+    high_to_low_range = df['high'] - df['low']
+    high_to_low_over_close = high_to_low_range / df['close']
+
+    # Price Momentum
+    price_diff = df['close'].diff(1)
+    price_momentum = price_diff / df['close'].shift(1)
+
+    # Enhanced Moving Average Crossover
+    short_term_ma = df['close'].rolling(window=7).mean()
+    long_term_ma = df['close'].rolling(window=21).mean()
+    crossover_signal = short_term_ma - long_term_ma
+    crossover_slope = crossover_signal.diff(1)
+
+    # Volatility
+    daily_returns = df['close'].pct_change()
+    volatility = daily_returns.rolling(window=21).std()
+
+    # Enhanced Liquidity
+    price_volume_ratio = (df['close'] * df['volume']) / df['amount']
+    avg_price_volume_ratio = price_volume_ratio.rolling(window=21).mean()
+    liquidity_measure = price_volume_ratio - avg_price_volume_ratio
+
+    # Market Sentiment
+    positive_day_count = (daily_returns > 0).rolling(window=21).sum()
+    negative_day_count = (daily_returns < 0).rolling(window=21).sum()
+    sentiment_score = positive_day_count - negative_day_count
+
+    # Combine all factors into a single alpha factor
+    alpha_factor = (
+        high_to_low_over_close + 
+        price_momentum + 
+        crossover_slope + 
+        1/volatility + 
+        liquidity_measure + 
+        sentiment_score
+    )
+
+    return alpha_factor
+```

@@ -1,0 +1,25 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero; assume diagonal (distance to self) is not part of TSP choices
+    inverse_distance = 1.0 / (distance_matrix + 1e-10)
+    
+    # Sparsify the matrix: only consider edges that are shorter than a threshold percentile (e.g., top 75% nearest)
+    values = distance_matrix[np.triu_indices_from(distance_matrix, k=1)]
+    threshold = np.percentile(values, 75)
+    sparse_mask = (distance_matrix < threshold).astype(np.float32)
+    
+    # Combine inverse distance with sparsity constraint
+    combined_heuristic = inverse_distance * sparse_mask
+
+    # Symmetrize in case the matrix wasn't symmetric (e.g., real-world asymmetric TSP)
+    combined_heuristic = (combined_heuristic + combined_heuristic.T) / 2
+
+    # Penalize rows with all zeros (isolated nodes) slightly to avoid total failure
+    epsilon = 1e-5
+    row_sums = combined_heuristic.sum(axis=1)
+    empty_rows = (row_sums == 0).nonzero()[0]
+    combined_heuristic[empty_rows, :] += epsilon
+    combined_heuristic[:, empty_rows] += epsilon
+
+    return combined_heuristic
+```

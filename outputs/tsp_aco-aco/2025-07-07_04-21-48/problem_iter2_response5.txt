@@ -1,0 +1,38 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    distance_matrix += eps
+
+    # Inverse distance heuristic (favoring shorter edges)
+    inv_distance = 1 / distance_matrix
+
+    # Local density estimation: sum of distances from i to others and j to others
+    row_sums = np.sum(distance_matrix, axis=1, keepdims=True)
+    col_sums = np.sum(distance_matrix, axis=0, keepdims=True)
+    local_density = 1 / (row_sums + col_sums + eps)
+
+    # Neighbor proximity factor: emphasize mutual nearest neighbors
+    n = distance_matrix.shape[0]
+    k = max(2, int(n * 0.1))  # number of nearest neighbors to consider per node
+    nn_indices = np.argsort(distance_matrix, axis=1)[:, :k]  # get top-k nearest neighbors per node
+
+    # Create a mutual neighbor mask
+    mutual_mask = np.zeros_like(distance_matrix)
+    for i in range(n):
+        for j in nn_indices[i]:
+            if i in nn_indices[j]:
+                mutual_mask[i, j] = 1
+
+    # Combine inverse distance, local density, and mutual neighbor mask
+    combined = inv_distance * local_density * mutual_mask
+
+    # Sparsify: only retain the top 30% percentile connections
+    threshold = np.percentile(combined, 70)
+    sparse_combined = np.where(combined > threshold, combined, 0)
+
+    # Suppress self-loops
+    np.fill_diagonal(sparse_combined, 0)
+
+    return sparse_combined
+```

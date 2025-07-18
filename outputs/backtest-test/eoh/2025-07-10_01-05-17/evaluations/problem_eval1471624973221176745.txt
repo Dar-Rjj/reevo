@@ -1,0 +1,26 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    def calculate_atr(sub_df, period=14):
+        high_low = sub_df['high'] - sub_df['low']
+        high_close = abs(sub_df['high'] - sub_df['close'].shift())
+        low_close = abs(sub_df['low'] - sub_df['close'].shift())
+        ranges = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
+        atr = ranges.rolling(window=period).mean()
+        return atr
+    
+    def calculate_cmf(sub_df, period=20):
+        mfm = ((sub_df['close'] - sub_df['low']) - (sub_df['high'] - sub_df['close'])) / (sub_df['high'] - sub_df['low'])
+        mf_volume = mfm * sub_df['volume']
+        cmf = mf_volume.rolling(window=period).sum() / sub_df['volume'].rolling(window=period).sum()
+        return cmf
+    
+    grouped = df.groupby(level='ticker')
+    
+    df['atr'] = grouped.apply(calculate_atr).reset_index(level=0, drop=True)
+    df['cmf'] = grouped.apply(calculate_cmf).reset_index(level=0, drop=True)
+    
+    df['heuristic_score'] = df['atr'] / df['cmf']
+    
+    heuristics_matrix = df['heuristic_score']
+    return heuristics_matrix

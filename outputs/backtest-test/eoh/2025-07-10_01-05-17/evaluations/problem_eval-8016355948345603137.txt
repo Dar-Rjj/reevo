@@ -1,0 +1,15 @@
+import pandas as pd
+    
+    # Calculate daily return
+    daily_return = df['close'].pct_change()
+    
+    # Calculate daily range
+    daily_range = (df['high'] - df['low']) / df['close'].shift(1)
+    
+    # Calculate normalized volume
+    norm_volume = (df['volume'] - df['volume'].mean()) / df['volume'].std()
+    
+    # Composite heuristic factor
+    heuristics_matrix = 0.5 * daily_return + 0.3 * daily_range + 0.2 * norm_volume
+    
+    return heuristics_matrix

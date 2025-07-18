@@ -1,0 +1,33 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Log Returns
+    open_to_close_return = np.log(df['close'] / df['open'])
+    high_to_low_range = np.log(df['high'] / df['low'])
+
+    # Compute Volume Weights
+    total_volume = df['volume'].sum()
+    volume_ratio = df['volume'] / total_volume
+    
+    # Weighted Sum of Log Returns
+    weighted_open_to_close = open_to_close_return * volume_ratio
+    weighted_high_to_low = high_to_low_range * volume_ratio
+    ivam_raw = weighted_open_to_close + weighted_high_to_low
+
+    # Smoothing Factor - Exponential Moving Average (EMA) of Weighted Log Returns
+    ivam_ema = ivam_raw.ewm(span=5, min_periods=1).mean()
+
+    # Adjust for Volatility
+    log_close_prices = np.log(df['close'])
+    volatility = log_close_prices.rolling(window=20, min_periods=1).std()
+    
+    # Ensure Non-Zero Volatility
+    volatility = np.where(volatility == 0, 1, volatility)
+    
+    # Apply Volatility Adjustment
+    ivam_adjusted = ivam_ema / volatility
+
+    return ivam_adjusted
+```

@@ -1,0 +1,17 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate High-Low Momentum
+    high_low_range = df['high'] - df['low']
+    high_low_momentum = high_low_range.rolling(window=10).mean()
+
+    # Calculate Volume Thrust
+    volume_ma = df['volume'].rolling(window=10).mean()
+    volume_thrust = df['volume'] / volume_ma
+
+    # Combine High-Low Momentum and Volume Thrust
+    alpha_factor = high_low_momentum * volume_thrust
+
+    return alpha_factor
+```

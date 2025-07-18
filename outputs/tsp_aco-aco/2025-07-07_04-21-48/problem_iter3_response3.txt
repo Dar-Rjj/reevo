@@ -1,0 +1,44 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and small distances causing numerical instability
+    epsilon = 1e-8
+    n = distance_matrix.shape[0]
+    
+    # Base heuristic: inverse of distance (higher is better)
+    inv_distance = 1.0 / (distance_matrix + epsilon)
+    
+    # Local density normalization per row and column
+    row_density = inv_distance.sum(axis=1, keepdims=True)
+    col_density = inv_distance.sum(axis=0, keepdims=True)
+    local_density_norm = inv_distance / (row_density + col_density + epsilon)
+    
+    # Node importance as normalized total connectivity potential
+    node_importance = inv_distance.sum(axis=1)
+    node_importance_norm = node_importance / (node_importance.sum() + epsilon)
+    
+    # Penalize edges from high-attractiveness nodes
+    attractiveness_penalty = np.outer(node_importance_norm, node_importance_norm)
+    
+    # Mutual proximity: normalize inverse distance against mutual neighbors
+    row_wise_norm = inv_distance / (inv_distance.max(axis=1, keepdims=True) + epsilon)
+    col_wise_norm = inv_distance / (inv_distance.max(axis=0, keepdims=True) + epsilon)
+    mutual_proximity = np.minimum(row_wise_norm, col_wise_norm)
+    
+    # Degree-based edge preference with mutual normalization
+    out_degree = inv_distance.sum(axis=1, keepdims=True)
+    in_degree = inv_distance.sum(axis=0, keepdims=True)
+    degree_norm = (out_degree * in_degree) ** 0.5  # Geometric mean for balance
+    degree_scaled = inv_distance / (degree_norm + epsilon)
+    
+    # Combine factors: local density norm * mutual proximity * degree scaling / penalty
+    combined = local_density_norm * mutual_proximity * degree_scaled / (attractiveness_penalty + 1.0)
+    
+    # Adaptive thresholding: sparsify low-priority edges based on percentile
+    threshold = np.percentile(combined[np.triu_indices(n, k=1)], 25)  # Lower percentile for stricter sparsity
+    combined[combined < threshold] = 0
+    
+    # Symmetrize for consistency and smooth evaluation
+    combined = (combined + combined.T) / 2.0
+    
+    return combined
+```

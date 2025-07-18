@@ -1,0 +1,5 @@
+[*] Running ...
+/home/rjj/reevo/problems/backtest/eval.py:39: ConstantInputWarning: An input array is constant; the correlation coefficient is not defined.
+  ic, _ = spearmanr(factors[mask], returns[mask])
+[*] Average:
+0.012221866619122942

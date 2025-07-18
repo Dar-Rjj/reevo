@@ -1,0 +1,63 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic alpha factor combining:
+    - Short-term RSI for overbought/oversold dynamics
+    - Volume-adjusted momentum with dynamic scaling
+    - Adaptive volatility normalization
+    - Rank-based combination with interpretable weights
+
+    Factor Interpretation:
+    - Positive values suggest bullish momentum confirmed by volume and low volatility
+    - Negative values indicate bearish or divergent behavior with weak participation
+    """
+
+    # 1. Ultra-short RSI (3-day) for rapid entry/exit detection
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    rsi_window = 3
+    avg_gain = gain.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(rsi_window).mean().droplevel(0).replace(0, 1e-6)
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+
+    # 2. Dynamic Volume-Adjusted Momentum
+    lookback = 5
+    raw_momentum = df['close'] - df['close'].shift(lookback)
+
+    # Volume ratio with smoothing to avoid spikes
+    avg_volume = df['volume'].groupby(level=0).rolling(lookback).mean().droplevel(0)
+    vol_ratio = df['volume'] / avg_volume.clip(lower=1e-6)
+
+    # Exponentially weighted volume adjustment (higher volume increases momentum impact)
+    vol_exponent = 0.5
+    volume_adjusted_mom = raw_momentum * (vol_ratio ** vol_exponent)
+
+    # 3. Adaptive Volatility Adjustment using expanding window
+    returns = df['close'].pct_change()
+    expanding_vol = returns.groupby(level=0).apply(lambda x: x.expanding().std()).droplevel(0)
+
+    normalized_returns = returns / expanding_vol.clip(lower=1e-6)
+
+    # 4. Trend Confirmation: Price above rolling mean
+    trend_signal = (df['close'] > df.groupby(level=0)['close'].rolling(10).mean().droplevel(0)).astype(int)
+
+    # Normalize components via ranking
+    rsi_rank = rsi.rank(pct=True)
+    mom_rank = volume_adjusted_mom.rank(pct=True)
+    vol_rank = normalized_returns.rank(pct=True)
+    trend_rank = trend_signal.rank(pct=True)
+
+    # Final Factor (Weights: 40% Mom, 30% RSI, 20% Vol Adj, 10% Trend)
+    combined_factor = (
+        0.4 * mom_rank +
+        0.3 * (1 - rsi_rank) +  # Invert RSI so oversold (good) gets higher weight
+        0.2 * (1 - vol_rank) +  # Prefer stable returns (lower normalized volatility)
+        0.1 * trend_rank       # Slight boost from trend confirmation
+    )
+
+    return combined_factor.fillna(0).clip(-3, 3)
+```

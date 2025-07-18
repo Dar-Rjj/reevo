@@ -1,0 +1,13 @@
+[*] Running ...
+Traceback (most recent call last):
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 60, in <module>
+    mean_ic = solve(market_data)
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 21, in solve
+    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x)).reset_index(level=0, drop=True)
+    ~~~~~~~~~~~^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/frame.py", line 4306, in __setitem__
+    self._set_item_frame_value(key, value)
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/frame.py", line 4434, in _set_item_frame_value
+    raise ValueError("Columns must be same length as key")
+ValueError: Columns must be same length as key

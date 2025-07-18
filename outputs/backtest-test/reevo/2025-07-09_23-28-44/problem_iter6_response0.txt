@@ -1,0 +1,65 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Enhanced heuristic alpha factor combining:
+    - Dynamic RSI with adaptive smoothing
+    - Volume-weighted momentum with nonlinear scaling
+    - Adaptive volatility normalization using expanding window
+    - Rank-based combination with robust normalization
+
+    Factor Interpretation:
+    - Positive values suggest strong, volume-supported momentum in low-volatility environments
+    - Negative values indicate weakening or bearish price action with high volatility
+    """
+
+    # 1. Adaptive Short-Term RSI (Relative Strength Index)
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+
+    # Use dynamic window size based on data availability per ticker
+    rsi_window = 5
+    avg_gain = gain.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(rsi_window).mean().droplevel(0).replace(0, 1e-6)
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+
+    # 2. Nonlinear Volume-Weighted Momentum
+    lookback = 5
+    raw_momentum = df['close'] - df['close'].shift(lookback)
+
+    # Smooth volume ratio and apply square root for sublinear scaling
+    avg_volume = df['volume'].groupby(level=0).rolling(lookback).mean().droplevel(0)
+    vol_ratio = df['volume'] / avg_volume.clip(lower=1e-6)
+
+    vol_exponent = 0.7  # Sublinear exponent to emphasize diminishing returns of volume
+    volume_adjusted_mom = raw_momentum * (vol_ratio ** vol_exponent)
+
+    # 3. Adaptive Volatility Normalization
+    returns = df['close'].pct_change()
+    expanding_vol = returns.groupby(level=0).apply(lambda x: x.expanding().std()).droplevel(0)
+
+    normalized_returns = returns / expanding_vol.clip(lower=1e-6)
+
+    # 4. Trend Confirmation with multi-horizon support
+    short_trend = (df['close'] > df.groupby(level=0)['close'].rolling(5).mean().droplevel(0)).astype(int)
+    med_trend = (df['close'] > df.groupby(level=0)['close'].rolling(20).mean().droplevel(0)).astype(int)
+    trend_signal = (short_trend + med_trend) / 2  # Composite trend score
+
+    # Rank-normalize Components
+    rsi_rank = rsi.rank(pct=True)
+    mom_rank = volume_adjusted_mom.rank(pct=True)
+    vol_rank = normalized_returns.rank(pct=True)
+    trend_rank = trend_signal.rank(pct=True)
+
+    # Final Alpha Factor: Weighted rank-combination with interpretability
+    alpha_factor = (
+        0.40 * mom_rank +
+        0.30 * (1 - rsi_rank) +      # Invert RSI: oversold gives positive signal
+        0.20 * (1 - vol_rank) +     # Prefer lower volatility
+        0.10 * trend_rank            # Mild trend-following boost
+    )
+
+    return alpha_factor.fillna(0).clip(-3, 3)
+```

@@ -1,0 +1,14 @@
+def heuristics_v2(df):
+    # Calculate 14-day Rate of Change (ROC)
+    roc = df['close'].pct_change(periods=14) * 100
+    
+    # Calculate 20-day and 5-day simple moving averages
+    sma_20 = df['close'].rolling(window=20).mean()
+    sma_5 = df['close'].rolling(window=5).mean()
+    
+    # Custom volatility measure: difference between 20-day and 5-day SMAs
+    custom_volatility = sma_20 - sma_5
+    
+    # Generate the heuristics matrix as the final output
+    heuristics_matrix = (roc + custom_volatility) / 2
+    return heuristics_matrix

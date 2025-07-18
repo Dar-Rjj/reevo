@@ -1,0 +1,1 @@
+Combine log returns with volume weights, apply EMA for smoothing, and integrate multi-timeframe volatility. Incorporate intraday price movements and market sentiment for a more robust and interpretable alpha factor.

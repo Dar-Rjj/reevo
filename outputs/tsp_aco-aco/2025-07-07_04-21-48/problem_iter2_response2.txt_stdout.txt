@@ -1,0 +1,9 @@
+[*] Running ...
+[*] Dataset loaded: /home/rjj/reevo/problems/tsp_aco/dataset/train50_dataset.npy with 5 instances.
+[*] Instance 0: 5.954461907577842
+[*] Instance 1: 6.039302063791563
+[*] Instance 2: 6.983555657678755
+[*] Instance 3: 6.7338145059136805
+[*] Instance 4: 6.1619882746674435
+[*] Average:
+6.374624481925857

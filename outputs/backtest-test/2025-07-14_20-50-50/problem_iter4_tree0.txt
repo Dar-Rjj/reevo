@@ -1,0 +1,21 @@
+```txt
+High-to-Low Range Over Close and Volume Trend
+├── Calculate High-to-Low Range
+│   ├── Use High price
+│   └── Use Low price
+│       └── Subtract Low from High
+├── Normalize by Close price
+│   ├── Use Close price
+│   └── Perform division
+│       └── (High - Low) / Close
+├── Calculate Volume Trend
+│   ├── Use Volume of today
+│   └── Use Volume of yesterday
+│       └── Calculate Volume Ratio
+│           └── Today's Volume / Yesterday's Volume
+└── Final Alpha Factor
+    ├── Multiply Normalized Range by Volume Trend
+    │   ├── Use result from Normalize by Close price
+    │   └── Use result from Volume Trend
+    └── Output the final value
+```

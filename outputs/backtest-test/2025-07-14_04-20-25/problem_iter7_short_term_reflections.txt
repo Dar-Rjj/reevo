@@ -1,0 +1,4 @@
+Focus on direct volatility adjustments and simpler, volume-weighted return calculations for clarity and effectiveness.
+Incorporate trade amount, minute-level data, and granular volatility for enhanced momentum and stability.
+Incorporate transaction amount, use combined volume and amount weights, and apply EMA for smoother trend analysis.
+Integrate traded amount, refine volatility adjustment, and enhance trend indicators for better predictive power.

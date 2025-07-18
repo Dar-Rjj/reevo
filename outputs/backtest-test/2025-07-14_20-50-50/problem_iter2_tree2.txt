@@ -1,0 +1,9 @@
+```txt
+Price Momentum Indicator
+├── Calculate Price Change
+│   ├── Use Close price
+│   └── Subtract Previous Close
+└── Divide by Previous Close
+    ├── Use Previous Close
+    └── Perform division
+```

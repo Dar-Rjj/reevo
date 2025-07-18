@@ -1,0 +1,1 @@
+Combine smoothed returns and true range for trend strength. Use ATR for normalization. Integrate volume-weighted price movements. Ensure adaptability with high-frequency data and robust statistical methods. Keep factors interpretable and avoid over-complexity.

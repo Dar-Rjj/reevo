@@ -1,0 +1,34 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    epsilon = 1e-8
+    dist = distance_matrix + epsilon
+
+    # Base heuristic: inverse of distance (higher means more promising)
+    inv_dist = 1.0 / dist
+
+    # Row and column normalization to capture relative importance
+    row_importance = inv_dist / (np.sum(inv_dist, axis=1, keepdims=True) + epsilon)
+    col_importance = inv_dist / (np.sum(inv_dist, axis=0, keepdims=True) + epsilon)
+
+    # Symmetrize the importance across both directions
+    sym_importance = (row_importance + col_importance) / 2.0
+
+    # Variance-based scaling to highlight nodes with uneven connectivity
+    row_var = np.var(inv_dist, axis=1, keepdims=True)
+    col_var = np.var(inv_dist, axis=0, keepdims=True)
+    var_scale = 1.0 + row_var + col_var
+
+    # Combine heuristics: weighted product of all components
+    combined = inv_dist * sym_importance * var_scale
+
+    # Sparsify: keep only top 30% edges based on global threshold
+    threshold = np.percentile(combined, 70)
+    combined[combined < threshold] = 0.0
+
+    # Normalize resulting heuristic for stability in downstream sampling
+    total_sum = np.sum(combined) + epsilon
+    combined = combined / total_sum
+
+    return combined
+```

@@ -1,0 +1,32 @@
+[*] Running ...
+Traceback (most recent call last):
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 60, in <module>
+    mean_ic = solve(market_data)
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 21, in solve
+    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x)).reset_index(level=0, drop=True)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/groupby.py", line 1825, in apply
+    result = self._python_apply_general(f, self._selected_obj)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/groupby.py", line 1886, in _python_apply_general
+    values, mutated = self._grouper.apply_groupwise(f, data, self.axis)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/ops.py", line 919, in apply_groupwise
+    res = f(group)
+          ^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 21, in <lambda>
+    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x)).reset_index(level=0, drop=True)
+                                                                              ^^^^^^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/gpt.py", line 29, in heuristics_v2
+    volatility_rank = -volatility.groupby(level=1).rank().groupby(level=0).apply(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/series.py", line 2256, in groupby
+    return SeriesGroupBy(
+           ^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/groupby.py", line 1330, in __init__
+    grouper, exclusions, obj = get_grouper(
+                               ^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/grouper.py", line 920, in get_grouper
+    raise ValueError("level > 0 or level < -1 only valid with MultiIndex")
+ValueError: level > 0 or level < -1 only valid with MultiIndex

@@ -1,0 +1,27 @@
+import pandas as pd
+import numpy as np
+
+def heuristics_v3(df):
+    # Calculate the Rate of Change (ROC) for the closing prices
+    roc = (df['close'] / df['close'].shift(20) - 1) * 100
+    
+    # Normalize the ROC
+    norm_roc = (roc - roc.mean()) / roc.std()
+    
+    # Calculate the Average True Range (ATR)
+    tr1 = df['high'] - df['low']
+    tr2 = abs(df['high'] - df['close'].shift(1))
+    tr3 = abs(df['low'] - df['close'].shift(1))
+    true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    atr = true_range.rolling(window=20).mean()
+    
+    # Calculate the ratio of the current ATR to its 20-day moving average
+    atr_ratio = atr / atr.rolling(window=20).mean()
+    
+    # Normalize the ATR ratio
+    norm_atr_ratio = (atr_ratio - atr_ratio.mean()) / atr_ratio.std()
+    
+    # Combine the normalized ROC and ATR ratio into a single heuristic
+    heuristics_matrix = 0.6 * norm_roc + 0.4 * norm_atr_ratio
+    
+    return heuristics_matrix

@@ -1,0 +1,29 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    distance_matrix += eps
+
+    # Base heuristic: inverse of distances (shorter edges are more promising)
+    inv_distance = 1 / distance_matrix
+
+    # Local density normalization using row and column averages
+    row_avg = np.mean(distance_matrix, axis=1, keepdims=True)
+    col_avg = np.mean(distance_matrix, keepdims=True)
+    local_density_mask = distance_matrix < (0.5 * row_avg + 0.5 * col_avg)
+    inv_density = local_density_mask.astype(float)
+
+    # Combine with local density weighting
+    combined = inv_distance * inv_density
+
+    # Adaptive sparsification: zero out entries below a percentile threshold
+    n = distance_matrix.shape[0]
+    sparsity_threshold_percentile = max(60, 100 - int(n))  # dynamically adjust based on size
+    threshold = np.percentile(combined, sparsity_threshold_percentile)
+    combined[combined < threshold] = 0
+
+    # Suppress self-loops
+    np.fill_diagonal(combined, 0)
+
+    return combined
+```

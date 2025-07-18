@@ -1,0 +1,30 @@
+```python
+import numpy as np
+
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    dist = distance_matrix + eps
+    
+    # Inverse of distance as base heuristic (favor shorter edges)
+    inv_dist = 1.0 / dist
+    
+    # Normalize each row to create a local preference per node
+    row_wise_norm = inv_dist / inv_dist.sum(axis=1, keepdims=True)
+    
+    # Combine global and local importance using power scaling
+    global_score = inv_dist ** 1.5
+    local_score = row_wise_norm ** 0.5
+    
+    # Aggregate scores
+    combined = global_score * local_score
+    
+    # Sparsify: mask out values below threshold (relative to max in row)
+    threshold = 0.1  # Tune this for sparsity control
+    max_per_row = combined.max(axis=1, keepdims=True)
+    sparse_mask = combined < (threshold * max_per_row)
+    
+    combined[sparse_mask] = 0.0  # Zero out unpromising edges
+    
+    return combined
+```

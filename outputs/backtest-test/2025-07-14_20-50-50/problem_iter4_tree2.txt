@@ -1,0 +1,22 @@
+```txt
+Volume-Weighted Momentum Indicator with EMA Smoothing
+├── Calculate Daily Log Return
+│   ├── Use Close price of today
+│   └── Use Close price of yesterday
+├── Calculate Volume Factor
+│   ├── Sum of Volumes in the Last M Days
+│   └── Divide by M
+├── Multiply Daily Log Return by Volume Factor
+│   ├── Use Daily Log Return
+│   └── Multiply by Volume Factor
+├── Calculate Short-Term Exponential Moving Average (EMA)
+│   ├── Use Weighted Daily Returns
+│   └── Apply Exponential Moving Average with N Days
+├── Calculate Long-Term Exponential Moving Average (EMA)
+│   ├── Use Weighted Daily Returns
+│   └── Apply Exponential Moving Average with P Days
+└── Final Alpha Factor
+    ├── Subtract Long-Term EMA from Short-Term EMA
+    │   ├── Use Short-Term EMA
+    │   └── Use Long-Term EMA
+```

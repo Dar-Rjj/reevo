@@ -1,0 +1,33 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    A heuristic for generating an alpha factor based on a normalized momentum score,
+    volume divergence, and volatility adjustment. Designed to capture price strength
+    relative to recent history, adjusted by volume and smoothed with volatility.
+    
+    Factor Interpretation:
+    - Positive value indicates bullish momentum with volume support (potential upward move)
+    - Negative value suggests bearish pressure or divergence (potential downward move)
+    """
+
+    window = 20  # lookback window
+
+    # Price trend: difference between close and rolling mean of close
+    price_trend = df['close'] - df.groupby(level=0)['close'].rolling(window=window).mean().values
+
+    # Volume signal: deviation from typical volume over the window
+    avg_volume = df.groupby(level=0)['volume'].rolling(window=window).mean().values
+    vol_signal = df['volume'] / avg_volume - 1
+
+    # Combine trend and volume
+    momentum_with_volume = price_trend * vol_signal
+
+    # Normalize using rolling standard deviation (volatility scaling)
+    std = df.groupby(level=0)['close'].pct_change().rolling(window=window).std().values
+    std = np.where(std == 0, 1e-7, std)
+
+    # Final factor: scaled momentum-divergence
+    alpha_factor = momentum_with_volume / (df['close'] * std + 1e-7)
+
+    return pd.Series(alpha_factor, index=df.index, name='heuristics_v2')
+```

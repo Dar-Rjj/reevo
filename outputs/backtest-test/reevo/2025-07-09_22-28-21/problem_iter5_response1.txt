@@ -1,0 +1,40 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Adaptive lookback based on regime detection (e.g., volatility regime)
+    rolling_vol = df['close'].pct_change().rolling(window=10).std()
+    high_vol_regime = rolling_vol > rolling_vol.quantile(0.75)
+    
+    # Dynamic window for recent highs/lows depending on volatility regime
+    window_length = 10 * (1 + high_vol_regime.astype(int))  # longer window in high volatility
+
+    # Normalized price position in adaptive range with exponential weighting
+    recent_high = df.groupby(level=1)['high'].rolling(window=window_length.values).max().droplevel(0)
+    recent_low = df.groupby(level=1)['low'].rolling(window=window_length.values).min().droplevel(0)
+    normalized_price = (df['close'] - recent_low) / (recent_high - recent_low + 1e-7)
+
+    # Smoothed momentum factor with decay to emphasize recent returns
+    momentum_short = df.groupby(level=0)['close'].pct_change(3).ewm(span=5).mean().fillna(0)
+    momentum_long = df.groupby(level=0)['close'].pct_change(20).ewm(span=10).mean().fillna(0)
+    momentum_factor = momentum_short - momentum_long
+
+    # Volume ratio relative to smoothed volume baseline, normalized
+    volume_ma = df.groupby(level=0)['volume'].transform(lambda x: x.rolling(window=10).mean())
+    volume_ratio = df['volume'] / (volume_ma + 1e-7)
+    smoothed_volume = volume_ratio.clip(lower=0.5, upper=2.0)
+
+    # Behavioral signal: price sensitivity to volume (higher if volume confirms movement)
+    price_sensitivity = df['close'].pct_change() * smoothed_volume
+
+    # Inverse volatility scaling per asset-date
+    inv_volatility = 1.0 / (df.groupby(level=0)['close'].pct_change().add(1e-7).abs().rolling(window=10).std() + 1e-7)
+
+    # Composite alpha blending multiple signals with adaptive weights
+    alpha = inv_volatility * (
+        normalized_price * 0.3 +
+        price_sensitivity * 0.2 +
+        momentum_factor * 0.3 +
+        smoothed_volume * 0.2
+    )
+
+    return alpha.clip(lower=-1, upper=1)
+```

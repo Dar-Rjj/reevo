@@ -1,0 +1,44 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    def RSI(series, period=14):
+        delta = series.diff(1)
+        gain = (delta.where(delta > 0, 0)).fillna(0)
+        loss = (-delta.where(delta < 0, 0)).fillna(0)
+        avg_gain = gain.rolling(window=period).mean()
+        avg_loss = loss.rolling(window=period).mean()
+        rs = avg_gain / avg_loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi.fillna(0)
+
+    def PPO(line, fast=12, slow=26, signal=9):
+        ema_fast = line.ewm(span=fast, adjust=False).mean()
+        ema_slow = line.ewm(span=slow, adjust=False).mean()
+        ppo = 100 * (ema_fast - ema_slow) / ema_slow
+        return ppo.fillna(0)
+
+    def StochasticOscillator(high, low, close, period=14):
+        k = ((close - low.rolling(window=period).min()) / 
+             (high.rolling(window=period).max() - low.rolling(window=period).min())) * 100
+        return k.fillna(0)
+    
+    close_prices = df['close']
+    high_prices = df['high']
+    low_prices = df['low']
+    volumes = df['volume']
+
+    rsi_values = RSI(close_prices)
+    ppo_values = PPO(close_prices)
+    stochastic_values = StochasticOscillator(high_prices, low_prices, close_prices)
+
+    # Volume-adjusted PPO
+    volume_trend = volumes.rolling(window=30).mean() / volumes.rolling(window=60).mean()
+    adjusted_ppo = ppo_values * volume_trend
+
+    # Dynamic weighting
+    weight_rsi = (rsi_values / 100)
+    weight_stochastic = 1 - weight_rsi
+
+    heuristics_matrix = (rsi_values * weight_rsi + stochastic_values * weight_stochastic) * adjusted_ppo
+
+    return heuristics_matrix

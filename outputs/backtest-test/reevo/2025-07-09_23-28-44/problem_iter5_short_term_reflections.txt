@@ -1,0 +1,4 @@
+Incorporate volume-adj. momentum, use shorter RSI windows, rank normalization, volatility weighting, and balance component interpretability with dynamic adaptability.
+Focus on volume-weighted momentum, adaptive lookback periods, and robust normalization for improved heuristic design.
+Focus on interpretable signals, normalize components, balance trend strength with risk measures, and validate robustness across market regimes.
+Focus on signal normalization, volume-weighted momentum, shorter RSI windows, and volatility adjustment. Prioritize interpretability and robustness.

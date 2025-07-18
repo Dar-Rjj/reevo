@@ -1,0 +1,27 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate Intraday Volatility
+    df['high_low_range'] = df['high'] - df['low']
+    df['true_range'] = (df['high'] - df['low']).combine((df['high'] - df['close'].shift(1)).abs(), max).combine((df['low'] - df['close'].shift(1)).abs(), max)
+    
+    # Construct Intraday Price Momentum
+    df['intraday_return'] = (df['close'] - df['open']) / df['open']
+    df['ema_5'] = df['intraday_return'].ewm(span=5, adjust=False).mean()
+    df['ema_10'] = df['intraday_return'].ewm(span=10, adjust=False).mean()
+    
+    # Measure Trading Activity
+    df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+    df['dollar_volume_impact'] = df['volume'] * df['close']
+    
+    # Combine all the components into a single alpha factor
+    df['alpha_factor'] = (
+        df['true_range'] * 
+        df['ema_5'] * 
+        df['volume_ratio'] * 
+        df['dollar_volume_impact']
+    )
+    
+    return df['alpha_factor']
+```

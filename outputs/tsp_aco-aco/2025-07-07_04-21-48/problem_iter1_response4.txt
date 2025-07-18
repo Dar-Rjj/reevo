@@ -1,0 +1,23 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    distance_matrix += eps
+    
+    # Inverse distance as a basic heuristic (shorter edges are better)
+    inv_distance = 1 / distance_matrix
+    
+    # Local density estimation: sum of distances from i to others and j to others
+    row_sums = np.sum(distance_matrix, axis=1, keepdims=True)
+    col_sums = np.sum(distance_matrix, axis=0, keepdims=True)
+    local_density = 1 / (row_sums + col_sums + eps)
+
+    # Combine inverse distance with local density
+    combined = inv_distance * local_density
+
+    # Sparsify the matrix by thresholding - only keep top 30% percentile connections
+    threshold = np.percentile(combined, 70)
+    sparse_combined = np.where(combined > threshold, combined, 0)
+
+    return sparse_combined
+```

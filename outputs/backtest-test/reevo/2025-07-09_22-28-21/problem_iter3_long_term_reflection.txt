@@ -1,0 +1,1 @@
+Design heuristics using simple, interpretable ratios of price extremes relative to recent ranges. Incorporate volume dynamics for confirmation. Normalize features and adaptively weight them based on regime shifts to enhance robustness and economic intuition.

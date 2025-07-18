@@ -1,0 +1,28 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    distance_matrix = distance_matrix + eps
+
+    # Inverse of distance as a base heuristic (favor shorter edges)
+    inv_dist = 1 / distance_matrix
+
+    # Sparsify: ignore edges longer than the mean distance
+    mean_distance = np.mean(distance_matrix)
+    sparse_mask = (distance_matrix <= mean_distance).astype(float)
+
+    # Normalize row-wise to emphasize local edge choices
+    row_norm = inv_dist / (inv_dist.sum(axis=1, keepdims=True) + eps)
+
+    # Combine sparsity mask and normalized inverse distance
+    combined = sparse_mask * row_norm
+
+    # Penalize symmetric entries slightly to discourage premature cycles
+    penalty_factor = 0.9
+    for i in range(distance_matrix.shape[0]):
+        for j in range(i + 1, distance_matrix.shape[1]):
+            combined[i, j] += combined[j, i] * penalty_factor
+            combined[j, i] = combined[i, j] * penalty_factor
+
+    return combined
+```

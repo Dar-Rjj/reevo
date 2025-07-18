@@ -1,0 +1,24 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    eps = 1e-8
+    distance_matrix += eps
+
+    # Inverse distance as base heuristic (higher value for shorter edges)
+    inv_distance = 1 / distance_matrix
+
+    # Sparsify: ignore edges longer than a threshold (set to zero)
+    max_distance = np.percentile(distance_matrix, 75)  # Ignore top 25% longest edges
+    sparse_mask = (distance_matrix < max_distance).astype(float)
+    inv_distance *= sparse_mask
+
+    # Degree penalty: penalize edges connected to nodes with already high degree (locally used in sampling)
+    node_degree = np.sum(inv_distance > 0, axis=1)
+    degree_penalty = 1 / (1 + node_degree[:, np.newaxis]) * 1 / (1 + node_degree[np.newaxis, :])
+    inv_distance *= degree_penalty
+
+    # Normalize to make values comparable across different-sized instances
+    inv_distance /= np.max(inv_distance)
+
+    return inv_distance
+```

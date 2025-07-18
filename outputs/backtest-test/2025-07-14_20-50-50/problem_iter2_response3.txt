@@ -1,0 +1,24 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df, N=10, M=20, P=50):
+    # Calculate Daily Return
+    df['daily_return'] = df['close'].pct_change()
+
+    # Calculate Short-Term EMA on daily returns
+    df['short_term_ema'] = df['daily_return'].ewm(span=N, adjust=False).mean()
+
+    # Calculate Volume Factor
+    df['volume_factor'] = df['volume'].rolling(window=M).sum() / M
+
+    # Multiply Daily Return by Volume Factor
+    df['weighted_daily_return'] = df['daily_return'] * df['volume_factor']
+
+    # Calculate Long-Term EMA on weighted daily returns
+    df['long_term_ema'] = df['weighted_daily_return'].ewm(span=P, adjust=False).mean()
+
+    # The alpha factor is the long-term EMA of the weighted daily returns
+    alpha_factor = df['long_term_ema']
+    
+    return alpha_factor
+```

@@ -1,0 +1,28 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Compute normalized price position in adaptive recent range using median sensitivity
+    recent_high = df['high'].rolling(window=15).max()
+    recent_low = df['low'].rolling(window=15).min()
+    normalized_price = (df['close'] - recent_low) / (recent_high - recent_low + 1e-7)
+
+    # Volume momentum with directional bias: up-volume vs down-volume
+    price_change = df.groupby(level=0)['close'].pct_change()
+    up_volume = df['volume'] * (price_change > 0)
+    down_volume = df['volume'] * (price_change < 0)
+    volume_momentum = up_volume.groupby(level=0).rolling(window=5).sum().values - \
+                      down_volume.groupby(level=0).rolling(window=5).sum().values
+    volume_signal = volume_momentum / (df['volume'].rolling(window=10).mean() + 1e-7)
+
+    # Adaptive regime detection: trending vs mean-reverting based on rolling correlation
+    returns_5d = df['close'].groupby(level=0).pct_change(5)
+    returns_20d = df['close'].groupby(level=0).pct_change(20)
+    trend_regime = returns_5d.rolling(window=10).corr(returns_20d.rolling(window=10)).fillna(0)
+    trend_regime = trend_regime.clip(-1, 1).replace(np.nan, 0)
+
+    # Dynamic weighting between price and volume signals based on regime
+    alpha = (normalized_price * (0.5 + 0.5 * trend_regime)) + \
+            (volume_signal * (0.5 - 0.5 * trend_regime))
+
+    # Final normalization and clipping to avoid extreme values
+    return alpha.clip(lower=-1, upper=1)
+```

@@ -1,0 +1,29 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon to the distance matrix
+    epsilon = 1e-8
+    distance_matrix += epsilon
+
+    # Base heuristic: inverse of distance (closer nodes are more promising)
+    inv_distance = 1 / distance_matrix
+
+    # Compute node degrees of nearest neighbors as a sparsity factor
+    num_nodes = distance_matrix.shape[0]
+    k = max(3, int(np.log(num_nodes)))  # select top log(n) or at least 3 neighbors
+    nn_indices = np.argsort(distance_matrix, axis=1)[:, 1:k+1]  # nearest k neighbors
+
+    # Initialize sparse mask
+    sparse_mask = np.zeros_like(distance_matrix, dtype=bool)
+    for i in range(num_nodes):
+        sparse_mask[i, nn_indices[i]] = True
+
+    # Combine heuristics: use inverse distance and suppress non-nearest neighbor edges
+    combined_heuristic = inv_distance * sparse_mask
+
+    # Normalize each row for better balance
+    row_sums = combined_heuristic.sum(axis=1, keepdims=True)
+    row_sums[row_sums == 0] = 1  # avoid division by zero
+    combined_heuristic /= row_sums
+
+    return combined_heuristic
+```

@@ -1,0 +1,46 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # High-to-Low Range Over Close
+    df['hl_range'] = df['high'] - df['low']
+    df['hl_range_over_close'] = df['hl_range'] / df['close']
+
+    # Price Momentum
+    df['price_momentum'] = (df['close'] - df['close'].shift(1)) / df['close'].shift(1)
+
+    # Enhanced Moving Average Crossover
+    short_window = 10
+    long_window = 50
+    df['short_mavg'] = df['close'].rolling(window=short_window, min_periods=short_window).mean()
+    df['long_mavg'] = df['close'].rolling(window=long_window, min_periods=long_window).mean()
+    df['crossover_signal'] = df['short_mavg'] - df['long_mavg']
+    df['crossover_slope'] = df['crossover_signal'].rolling(window=10, min_periods=10).apply(lambda x: np.polyfit(range(len(x)), x, 1)[0], raw=True)
+
+    # Volatility
+    df['daily_returns'] = df['close'].pct_change()
+    df['volatility'] = df['daily_returns'].rolling(window=20, min_periods=20).std()
+
+    # Enhanced Liquidity
+    df['price_volume_ratio'] = df['close'] * df['volume']
+    df['avg_price_volume_ratio'] = df['price_volume_ratio'].rolling(window=20, min_periods=20).mean()
+
+    # Market Sentiment
+    recent_period = 20
+    df['positive_day_count'] = (df['daily_returns'] > 0).rolling(window=recent_period, min_periods=recent_period).sum()
+    df['negative_day_count'] = (df['daily_returns'] < 0).rolling(window=recent_period, min_periods=recent_period).sum()
+    df['sentiment_score'] = df['positive_day_count'] - df['negative_day_count']
+
+    # Combine all factors into a single alpha factor
+    df['alpha_factor'] = (
+        df['hl_range_over_close'] +
+        df['price_momentum'] +
+        df['crossover_slope'] -
+        df['volatility'] +
+        df['avg_price_volume_ratio'] +
+        df['sentiment_score']
+    )
+
+    return df['alpha_factor']
+```

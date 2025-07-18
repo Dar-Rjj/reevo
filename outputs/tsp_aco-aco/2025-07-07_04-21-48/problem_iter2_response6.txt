@@ -1,0 +1,30 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and small distances causing numerical instability
+    epsilon = 1e-8
+    n = distance_matrix.shape[0]
+    
+    # Base heuristic: inverse of distance (higher is better)
+    inv_distance = 1.0 / (distance_matrix + epsilon)
+    
+    # Normalize each row to emphasize local edge comparison
+    row_wise_norm = inv_distance / (inv_distance.sum(axis=1, keepdims=True) + epsilon)
+    
+    # Degree approximation: sum of inverse distances for each node (row/col)
+    degree = inv_distance.sum(axis=1)
+    # Penalize edges between high-degree nodes to avoid early saturation
+    degree_penalty = np.outer(degree, degree)
+    degree_penalty /= (degree_penalty.max() + epsilon)  # Normalize penalty
+    
+    # Combine heuristics: normalized inverse distance * inverse penalty
+    combined = row_wise_norm * inv_distance * (1.0 / (degree_penalty + 1.0))
+    
+    # Sparsify using adaptive thresholding (bottom percentile)
+    threshold = np.percentile(combined[np.triu_indices(n, k=1)], 30)
+    combined[combined < threshold] = 0
+    
+    # Symmetrize the output for consistency
+    combined = (combined + combined.T) / 2.0
+    
+    return combined
+```

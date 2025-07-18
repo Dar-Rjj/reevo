@@ -1,0 +1,4 @@
+Focus on price relationships, avoid overcomplicating with volume adjustments; simplicity often enhances predictive power.
+Consider volatility and liquidity, integrate more price levels, and simplify calculations for clarity and interpretability.
+Simplify calculations, focus on price ratios, and avoid volume adjustments for clearer, more effective alpha factors.
+Integrate volume with price changes, use moving averages, and normalize for better predictive signals.

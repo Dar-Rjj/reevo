@@ -1,0 +1,73 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Novel alpha heuristic combining multiple signals with dynamic divergence detection:
+    - Adaptive RSI for trend strength and reversal detection
+    - Volume-Trend Divergence to capture weakening momentum
+    - Volatility regime adjustment using rolling quantiles
+    - Rank-based normalization across assets and time periods
+
+    Factor Interpretation:
+    - Positive values indicate strong alignment between price, momentum, and volume
+    - Negative values highlight potential reversals through divergent behavior
+    """
+    
+    # 1. Adaptive RSI (Relative Strength Index)
+    def adaptive_rsi(close, window=14):
+        delta = close.diff()
+        gain = delta.where(delta > 0, 0)
+        loss = -delta.where(delta < 0, 0)
+        
+        avg_gain = gain.groupby(level=0).apply(lambda x: x.ewm(span=window).mean()).droplevel(0)
+        avg_loss = loss.groupby(level=0).apply(lambda x: x.ewm(span=window).mean()).droplevel(0)
+        
+        rs = avg_gain / avg_loss.replace(0, 1e-6)
+        return 100 - (100 / (1 + rs))
+    
+    rsi = adaptive_rsi(df['close'])
+    
+    # 2. Trend-Volume Divergence
+    trend_window = 10
+    log_volume = np.log(df['volume'] + 1e-6)
+    
+    trend_signal = df['close'].groupby(level=0).pct_change(trend_window).droplevel(0)
+    volume_signal = log_volume.groupby(level=0).pct_change(trend_window).droplevel(0)
+    
+    # Compute rolling correlation sign as divergence indicator
+    corr_window = 5
+    tv_corr = trend_signal.groupby(level=0).rolling(corr_window, min_periods=3).corr(volume_signal).droplevel(0)
+    divergence_signal = np.sign(tv_corr - tv_corr.groupby(level=0).shift(1))
+    
+    # 3. Volatility Regime Detection
+    returns = df['close'].pct_change()
+    vol_window = 20
+    volatility = returns.groupby(level=0).rolling(vol_window).std().droplevel(0)
+    
+    # Identify high/low volatility regimes using rolling quantiles
+    vol_regime = volatility.groupby(level=0).rank(pct=True).clip(0.01, 0.99)
+    
+    # 4. Normalize components via ranking
+    rsi_rank = rsi.rank(pct=True)
+    divergence_rank = divergence_signal.rank(pct=True)
+    vol_regime_rank = vol_regime.rank(pct=True)
+    
+    # Dynamic weighting based on volatility regime
+    low_vol_mask = (vol_regime_rank < 0.3)
+    mid_vol_mask = (vol_regime_rank >= 0.3) & (vol_regime_rank <= 0.7)
+    
+    weights = pd.Series(0.0, index=df.index)
+    weights[low_vol_mask] = [0.5, 0.3, 0.2]  # Emphasize RSI in low volatility
+    weights[mid_vol_mask] = [0.4, 0.4, 0.2]  # Balanced in normal volatility
+    weights[~low_vol_mask & ~mid_vol_mask] = [0.3, 0.5, 0.2]  # Prioritize divergence in high vol
+    
+    # Final combined factor with volatility-adjusted weights
+    combined_factor = (
+        weights * (
+            0.4 * (1 - rsi_rank) +           # Inverted RSI: lower means oversold/bullish
+            0.4 * divergence_rank +          # Divergence strength
+            0.2 * (1 - vol_regime_rank)      # Prefer low volatility regimes
+        )
+    ).sum(axis=1)
+    
+    return combined_factor.fillna(0).clip(-3, 3)
+```

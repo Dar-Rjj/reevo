@@ -1,0 +1,26 @@
+[
+     {
+          "algorithm": "The new algorithm calculates a 30-day exponential moving average of the closing price, normalizes it, and then combines it with the 21-day ATR, adjusted by the 10-day rate of change (ROC) of the closing price, to generate a heuristics matrix.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    # Calculate 30-day exponential moving average of the close price\n    ema_30 = df['close'].ewm(span=30, adjust=False).mean()\n    # Normalize the EMA\n    normalized_ema = (ema_30 - ema_30.min()) / (ema_30.max() - ema_30.min())\n    # Calculate 21-day Average True Range (ATR)\n    tr = df[['high', 'low', 'close']].apply(lambda x: max(x) - min(x), axis=1)\n    atr = tr.rolling(window=21).mean()\n    # Calculate 10-day Rate of Change (ROC) of the close price\n    roc_10 = df['close'].pct_change(periods=10)\n    # Combine normalized EMA, ATR, and ROC\n    heuristics_matrix = (normalized_ema + atr + roc_10) / 3\n    return heuristics_matrix",
+          "objective": -0.06275,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The new algorithm calculates a 30-day exponential moving average of the closing price, normalizes it, and then combines it with the 21-day ATR, adjusted by the 7-day rate of change (ROC) of the closing price, to generate a heuristics matrix.",
+          "code": "def heuristics_v2(df):\n    # Calculate 30-day exponential moving average of the close price\n    ema_30 = df['close'].ewm(span=30, adjust=False).mean()\n    # Normalize the EMA\n    normalized_ema = (ema_30 - ema_30.min()) / (ema_30.max() - ema_30.min())\n    # Calculate 21-day Average True Range (ATR)\n    tr = df[['high', 'low', 'close']].apply(lambda x: max(x) - min(x), axis=1)\n    atr = tr.rolling(window=21).mean()\n    # Calculate 7-day Rate of Change (ROC) of the close price\n    roc_7 = df['close'].pct_change(periods=7)\n    # Combine normalized EMA, ATR, and ROC\n    heuristics_matrix = (normalized_ema + atr + roc_7) / 3\n    return heuristics_matrix",
+          "objective": -0.06212,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The new algorithm calculates a 20-day exponential moving average of the closing price, normalizes it, and then combines it with the 14-day ATR, adjusted by the 5-day rate of change (ROC) of the closing price, to generate a heuristics matrix.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    # Calculate 20-day exponential moving average of the close price\n    ema_20 = df['close'].ewm(span=20, adjust=False).mean()\n    # Normalize the EMA\n    normalized_ema = (ema_20 - ema_20.min()) / (ema_20.max() - ema_20.min())\n    # Calculate 14-day Average True Range (ATR)\n    tr = df[['high', 'low', 'close']].apply(lambda x: max(x) - min(x), axis=1)\n    atr = tr.rolling(window=14).mean()\n    # Calculate 5-day Rate of Change (ROC) of the close price\n    roc_5 = df['close'].pct_change(periods=5)\n    # Combine normalized EMA, ATR, and ROC\n    heuristics_matrix = (normalized_ema + atr + roc_5) / 3\n    return heuristics_matrix",
+          "objective": -0.06208,
+          "other_inf": null
+     },
+     {
+          "algorithm": "The new algorithm computes a novel alpha factor by calculating the 30-day exponential moving average (EMA) of the closing price, normalizing it, and then combining it with the average true range (ATR) over 14 days to generate a heuristics matrix.",
+          "code": "import pandas as pd\n\ndef heuristics_v2(df):\n    # Calculate 30-day exponential moving average of the close price\n    ema_30 = df['close'].ewm(span=30, adjust=False).mean()\n    # Normalize the EMA\n    normalized_ema = (ema_30 - ema_30.min()) / (ema_30.max() - ema_30.min())\n    # Calculate 14-day Average True Range (ATR)\n    tr = df[['high', 'low', 'close']].apply(lambda x: max(x) - min(x), axis=1)\n    atr = tr.rolling(window=14).mean()\n    # Combine normalized EMA and ATR\n    heuristics_matrix = (normalized_ema + atr) / 2\n    return heuristics_matrix",
+          "objective": -0.0611,
+          "other_inf": null
+     }
+]

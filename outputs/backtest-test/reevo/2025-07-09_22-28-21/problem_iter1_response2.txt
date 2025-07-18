@@ -1,0 +1,39 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Heuristic Alpha Factor Based on Dynamic Price Position and Liquidity.
+    
+    The factor measures how strong the closing price is relative to the recent price range,
+    normalized by volatility, while incorporating volume as a liquidity filter. 
+    The idea is to capture strength in price action weighted by high-volume participation,
+    adjusted for volatility to reduce noise.
+
+    Formula Overview:
+    - Normalized Price Position: (close - low) / (high - low + epsilon)
+    - Volatility Scaling: 1 / (std(close, window=20) + mean(close, window=20))
+    - Volume Adjustment: volume / max(volume, rolling_window=20)
+    - Composite Factor = Price Score * Volatility Scaling * Volume Adjustment
+    
+    Returns:
+    - pd.Series: Alpha signal indexed by (ticker, date)
+    """
+    window = 20
+    epsilon = 1e-7
+
+    # Price position within the daily range
+    price_position = (df['close'] - df['low']) / (df['high'] - df['low'] + epsilon)
+
+    # Rolling volatility of close prices
+    vol_std = df.groupby(level='ticker')['close'].rolling(window=window).std().droplevel(0)
+    vol_mean = df.groupby(level='ticker')['close'].rolling(window=window).mean().droplevel(0)
+    volatility_scaling = 1 / (vol_std + vol_mean + epsilon)
+
+    # Volume adjustment (normalize by max volume over lookback window)
+    volume_max = df.groupby(level='ticker')['volume'].rolling(window=window).max().droplevel(0)
+    volume_adjustment = df['volume'] / (volume_max + epsilon)
+
+    # Combine into final alpha signal
+    alpha_signal = price_position * volatility_scaling * volume_adjustment
+
+    return alpha_signal
+```

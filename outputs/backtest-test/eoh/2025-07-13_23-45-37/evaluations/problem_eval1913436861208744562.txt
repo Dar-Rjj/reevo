@@ -1,0 +1,25 @@
+import pandas as pd
+    import numpy as np
+    
+    # Calculate momentum: 10-day return
+    df['momentum'] = (df['close'] - df['close'].shift(10)) / df['close'].shift(10)
+    
+    # Calculate volatility: 30-day standard deviation of daily returns
+    daily_returns = df['close'].pct_change()
+    df['volatility'] = daily_returns.rolling(window=30).std()
+    
+    # Calculate liquidity: amount/volume (as a proxy for price per share traded)
+    df['liquidity'] = df['amount'] / df['volume']
+    
+    # Normalize the factors
+    df['momentum_norm'] = (df['momentum'] - df['momentum'].mean()) / df['momentum'].std()
+    df['volatility_norm'] = (df['volatility'] - df['volatility'].mean()) / df['volatility'].std()
+    df['liquidity_norm'] = (df['liquidity'] - df['liquidity'].mean()) / df['liquidity'].std()
+    
+    # Combine the normalized factors into a single heuristic score
+    df['heuristic_score'] = 0.5 * df['momentum_norm'] - 0.3 * df['volatility_norm'] + 0.2 * df['liquidity_norm']
+    
+    # Return the heuristic scores as a Series
+    heuristics_matrix = df['heuristic_score']
+    
+    return heuristics_matrix

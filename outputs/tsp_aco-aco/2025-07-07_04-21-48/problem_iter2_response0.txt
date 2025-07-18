@@ -1,0 +1,37 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon
+    epsilon = 1e-8
+    safe_distance = distance_matrix + epsilon
+
+    # Inverse of distance as the base heuristic (favor shorter edges)
+    inv_distance = 1.0 / safe_distance
+
+    # Determine local neighborhood using adaptive k based on node count
+    num_nodes = distance_matrix.shape[0]
+    k = max(3, int(np.sqrt(num_nodes)))  # adaptive to sqrt(N) or at least 3
+
+    # Build k-nearest neighbor mask for each node
+    knn_mask = np.zeros_like(distance_matrix, dtype=bool)
+    for i in range(num_nodes):
+        nearest_indices = np.argsort(distance_matrix[i])[:k]
+        knn_mask[i, nearest_indices] = True
+
+    # Mutual proximity: enhance edge weights if both nodes are mutual neighbors
+    mutual_mask = np.logical_and(knn_mask, knn_mask.T)
+
+    # Degree centrality estimation: approximate importance of nodes
+    degree_weights = np.sum(knn_mask, axis=1, keepdims=True)
+    degree_weights = degree_weights / (np.max(degree_weights) + epsilon)
+
+    # Local normalization: normalize inverse distances within each node's neighborhood
+    row_norm_weights = inv_distance / (inv_distance.sum(axis=1, keepdims=True) + epsilon)
+
+    # Combine all factors into final heuristic
+    combined_heuristic = inv_distance * row_norm_weights
+    combined_heuristic *= (1 + mutual_mask * 0.5)           # Boost mutual proximity
+    combined_heuristic *= (1 + degree_weights.T)            # Bias towards high-degree nodes
+    combined_heuristic *= knn_mask                          # Retain only local connections
+
+    return combined_heuristic
+```

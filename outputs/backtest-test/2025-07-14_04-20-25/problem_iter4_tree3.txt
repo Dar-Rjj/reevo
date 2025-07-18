@@ -1,0 +1,26 @@
+```txt
+Intraday Volatility-Adjusted Momentum (IVAM)
+├── Calculate Log Returns
+│   ├── Open to Close Log Return
+│   │   ├── Use Close price
+│   │   └── Use Open price
+│   ├── High to Low Log Range
+│   │   ├── Use High price
+│   │   └── Use Low price
+├── Compute IVAM
+│   ├── Weighted Sum of Log Returns
+│   │   ├── Weights by Volume Ratio
+│   │   │   ├── Use Volume
+│   │   │   └── Normalize by Total Volume
+│   │   ├── Combine Open to Close and High to Low Log Returns
+│   │   └── Apply Volume Weights
+│   ├── Smoothing Factor
+│   │   ├── Exponential Moving Average (EMA) of Weighted Log Returns
+└── Adjust for Volatility
+    ├── Calculate Volatility
+    │   ├── Standard Deviation of Log Close Prices
+    │   └── Use Recent Time Window
+    ├── Apply Volatility Adjustment
+    │   ├── Multiply IVAM by Inverse of Volatility
+    │   └── Ensure Non-Zero Volatility
+```

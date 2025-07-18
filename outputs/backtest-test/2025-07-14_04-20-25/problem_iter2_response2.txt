@@ -1,0 +1,34 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df):
+    # Calculate Multi-Timeframe High-Low Momentum
+    high_low_range_short = df['high'] - df['low']
+    high_low_range_medium = df['high'].rolling(window=50).max() - df['low'].rolling(window=50).min()
+    high_low_range_long = df['high'].rolling(window=200).max() - df['low'].rolling(window=200).min()
+
+    high_low_momentum_short = high_low_range_short.rolling(window=5).mean()
+    high_low_momentum_medium = high_low_range_medium.rolling(window=10).mean()
+    high_low_momentum_long = high_low_range_long.rolling(window=20).mean()
+
+    # Calculate Volume Thrust
+    volume_short_ma = df['volume'].rolling(window=5).mean()
+    volume_medium_ma = df['volume'].rolling(window=10).mean()
+    volume_long_ma = df['volume'].rolling(window=20).mean()
+
+    volume_thrust = df['volume'] / (volume_short_ma + volume_medium_ma + volume_long_ma)
+
+    # Incorporate Volatility
+    volatility_short = df['close'].pct_change().rolling(window=10).std()
+    volatility_medium = df['close'].pct_change().rolling(window=50).std()
+    volatility_long = df['close'].pct_change().rolling(window=200).std()
+
+    # Integrate Market Sentiment (Assuming external sentiment data is available in the DataFrame)
+    sentiment_score = df['sentiment_score']
+
+    # Combine Factors
+    alpha_factor = (high_low_momentum_short * high_low_momentum_medium * high_low_momentum_long *
+                    volume_thrust * (volatility_short + volatility_medium + volatility_long) * sentiment_score)
+
+    return alpha_factor
+```

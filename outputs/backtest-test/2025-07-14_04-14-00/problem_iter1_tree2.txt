@@ -1,0 +1,19 @@
+```txt
+Novel Momentum and Volatility Combination Alpha
+├── Calculate Exponential Moving Averages (EMA)
+│   ├── Calculate EMA for Close Prices (Short Term: 12 days, Long Term: 26 days)
+│   │   ├── Short Term EMA
+│   │   └── Long Term EMA
+│   └── Calculate EMA for High-Low Range (Volatility Measure: 14 days)
+├── Calculate Relative Strength
+│   ├── Use Short Term EMA
+│   └── Use Long Term EMA
+└── Combine with Volatility Adjusted Factor
+    ├── Use Volatility EMA
+    │   ├── Normalize Volatility (High-Low Range EMA / Average True Range over 14 days)
+    ├───── Use Average True Range (ATR)
+    │   ├── Calculate ATR (using 14 days period)
+    └── Weighting
+        ├── Use Relative Strength
+        └── Multiply by Normalized Volatility
+```

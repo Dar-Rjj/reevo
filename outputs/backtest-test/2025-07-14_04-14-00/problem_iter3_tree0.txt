@@ -1,0 +1,33 @@
+```txt
+Intraday Sentiment and Momentum Alpha
+├── Calculate Intraday Volatility
+│   ├── High-Low Range
+│   │   ├── Use High price
+│   │   └── Use Low price
+│   └── True Range Adjustment
+│       ├── Use Previous Close
+│       ├── Compare with High
+│       └── Compare with Low
+├── Construct Intraday Price Momentum
+│   ├── Calculate Intraday Return
+│   │   ├── Use Open price
+│   │   └── Use Close price
+│   └── Smooth Returns
+│       ├── Apply Exponential Moving Average (EMA)
+│       │   ├── Use Intraday Return
+│       │   └── Choose a Smoothing Factor
+│       └── Consider Different Periods for EMA
+└── Measure Trading Activity
+    ├── Volume Ratio
+    │   ├── Daily Volume
+    │   └── Average Volume over N days
+    ├── Dollar-Volume Impact
+    │   ├── Use Volume
+    │   └── Multiply by Close
+    └── Volume-Weighted Price Movement
+        ├── Calculate Typical Price
+        │   ├── (High + Low + Close) / 3
+        └── Weight by Volume
+            ├── Multiply Typical Price by Volume
+            └── Sum of Volume-Weighted Prices
+```

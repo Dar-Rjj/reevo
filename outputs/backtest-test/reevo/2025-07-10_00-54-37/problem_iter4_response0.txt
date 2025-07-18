@@ -1,0 +1,50 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the normalized trading volume
+    normalized_volume = (df['volume'] - df['volume'].mean()) / df['volume'].std()
+    
+    # Calculate the price change ratio
+    price_change_ratio = (df['close'] - df['open']) / (df['high'] - df['low'] + 1e-7)
+    
+    # Calculate the amount-weighted average price
+    amount_weighted_price = (df['amount'] * (df['high'] + df['low'] + df['close']) / 3) / (df['volume'] + 1e-7)
+    
+    # Calculate the relative strength index (RSI) for 14 periods
+    delta = df['close'].diff()
+    gain = (delta.where(delta > 0, 0)).fillna(0)
+    loss = (-delta.where(delta < 0, 0)).fillna(0)
+    avg_gain = gain.rolling(window=14).mean()
+    avg_loss = loss.rolling(window=14).mean()
+    rs = avg_gain / (avg_loss + 1e-7)
+    rsi = 100 - (100 / (1 + rs))
+    
+    # Calculate the momentum factor
+    momentum = df['close'] / df['close'].shift(12) - 1
+    
+    # Calculate the 20-day moving average and standard deviation of the closing price
+    df['ma_20'] = df.groupby(level=0)['close'].transform(lambda x: x.rolling(window=20).mean())
+    df['std_20'] = df.groupby(level=0)['close'].transform(lambda x: x.rolling(window=20).std())
+    
+    # Calculate the Z-score for the closing price
+    df['z_score'] = (df['close'] - df['ma_20']) / df['std_20']
+    
+    # Adaptive weights based on the Z-score
+    adaptive_weight = 1 / (1 + df['z_score'].abs())
+    df['adaptive_weight'] = adaptive_weight / adaptive_weight.sum()
+    
+    # Calculate the relative position of the close price within the high-low range, normalized by the average volume
+    df['position_strength'] = ((df['close'] - df['low']) / (df['high'] - df['low'] + 1e-7)) * (1/df['volume'])
+    
+    # Combine the factors using adaptive weights
+    combined_factor = (
+        price_change_ratio * normalized_volume * df['adaptive_weight'] +
+        amount_weighted_price * (1 - df['adaptive_weight']) +
+        rsi * (1 - df['adaptive_weight']) +
+        momentum * df['adaptive_weight'] +
+        df['position_strength'] * (1 - df['adaptive_weight'])
+    )
+    
+    return combined_factor
+```

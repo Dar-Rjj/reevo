@@ -1,0 +1,26 @@
+```txt
+Intraday Momentum and Volume Impact
+├── Calculate Intraday Momentum
+│   ├── Use High and Low Prices
+│   │   ├── Calculate Daily Range
+│   │   └── Divide by Previous Day Close
+│   └── Use Open and Close Prices
+│       ├── Calculate Open-to-Close Return
+│       └── Add to Normalized Daily Range
+├── Analyze Volume Impact
+│   ├── Compare Volume with Moving Average
+│   │   ├── Calculate 10-Day Volume Moving Average
+│   │   └── Calculate Volume Deviation
+│   └── Identify Volume Breakouts
+│       ├── Define Significant Volume Increase
+│       └── Apply Threshold
+└── Combine Factors for Alpha
+    ├── Weight Intraday Momentum
+    │   ├── Use Current Day's Volume
+    │   └── Multiply by Intraday Momentum
+    └── Adjust for Volume Impact
+        ├── If Volume Increase is Significant
+        │   └── Apply Higher Weights
+        └── Otherwise
+            └── Apply Lower Weights
+```

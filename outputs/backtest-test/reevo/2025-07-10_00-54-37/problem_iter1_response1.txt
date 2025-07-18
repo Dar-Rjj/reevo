@@ -1,0 +1,11 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Calculate the difference between the closing price and the previous day's closing price
+    df['momentum'] = df.groupby(level=0)['close'].diff()
+    
+    # Calculate the relative position of the close price within the high-low range, normalized by the average volume
+    df['position_strength'] = ((df['close'] - df['low']) / (df['high'] - df['low'] + 1e-7)) * (1/df['volume'])
+    
+    # Calculate a weighted sum of the 'momentum' and 'position_strength'
+    return 0.6 * df['momentum'] + 0.4 * df['position_strength']
+```

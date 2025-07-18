@@ -1,0 +1,16 @@
+```txt
+Price Momentum with Volume Confirmation
+├── Calculate Price Momentum
+│   ├── Compute Rolling Average of Close Price (Short-Term)
+│   └── Compute Rolling Average of Close Price (Long-Term)
+│       ├── Short-Term: 10 days
+│       └── Long-Term: 50 days
+├── Calculate Momentum Score
+│   ├── Subtract Long-Term Average from Short-Term Average
+└── Apply Volume Confirmation
+    ├── Identify Positive Momentum
+    │   ├── If Momentum Score > 0
+    └── Confirm with Volume Increase
+        ├── Compare Volume at t to Volume at t-1
+        └── If Volume at t > Volume at t-1, Signal Strong Buy
+```

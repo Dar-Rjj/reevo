@@ -1,0 +1,68 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    """
+    Mutated heuristic for generating an alpha factor with novel components:
+    - Adaptive lookback momentum based on volatility regime
+    - RSI divergence from price for reversal detection
+    - Volume surge detection as trend confirmation
+    - Rank-normalized and scaled by dynamic regimes
+
+    Factor Interpretation:
+    - Positive values indicate strong aligned trend/divergence signals
+    - Negative values highlight potential reversals or weak trends
+    """
+    
+    # 1. Dynamic Volatility Regime Detection (low, medium, high)
+    returns = df['close'].pct_change()
+    vol_window = 20
+    rolling_vol = returns.groupby(level=0).rolling(vol_window).std().droplevel(0)
+    vol_regime = rolling_vol.rank(pct=True)  # 0 to 1 scale
+
+    # 2. Adaptive Lookback Momentum based on volatility regime
+    base_lookback = 5
+    adjusted_lookback = (base_lookback * (1 + 3 * vol_regime)).astype(int).clip(3, 20)
+
+    def adaptive_momentum(group):
+        lookback = adjusted_lookback.loc[group.index]
+        return group['close'] - group['close'].shift(periods=lookback)
+
+    momentum = df.groupby(level=0, group_keys=False).apply(adaptive_momentum)
+
+    # 3. Short-Term RSI Divergence (7-day) vs Price Momentum
+    delta = df['close'].diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    rsi_window = 7
+    avg_gain = gain.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+    avg_loss = loss.groupby(level=0).rolling(rsi_window).mean().droplevel(0)
+    
+    rs = avg_gain / avg_loss.replace(0, 1e-6)
+    rsi = 100 - (100 / (1 + rs))
+    
+    rsi_divergence = rsi - rsi.shift()
+
+    # 4. Volume Surge Detection
+    volume_ma = df['volume'].groupby(level=0).rolling(10).mean().droplevel(0)
+    volume_std = df['volume'].groupby(level=0).rolling(10).std().droplevel(0)
+    volume_zscore = (df['volume'] - volume_ma) / volume_std.clip(lower=1e-6)
+    volume_signal = volume_zscore.clip(lower=0)  # Only positive surges
+
+    # 5. Composite signal with normalized ranks
+    momentum_rank = momentum.rank(pct=True)
+    rsi_div_rank = rsi_divergence.rank(pct=True)
+    volume_rank = volume_signal.rank(pct=True)
+
+    # Final composite factor with dynamic scaling
+    dynamic_weight_mom = 0.4 * (1 - vol_regime)  # Reduce weight in high vol
+    dynamic_weight_rsi = 0.35 * (1 + vol_regime)  # Increase weight in high vol
+    dynamic_weight_vol = 0.25 * (1 - vol_regime)
+
+    combined_factor = (
+        dynamic_weight_mom * momentum_rank +
+        dynamic_weight_rsi * (1 - rsi_div_rank) +  # Invert for reversal detection
+        dynamic_weight_vol * volume_rank
+    )
+
+    return combined_factor.fillna(0).clip(-3, 3)
+```

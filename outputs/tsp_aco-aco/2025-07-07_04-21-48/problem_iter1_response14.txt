@@ -1,0 +1,30 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero by adding a small epsilon to the distance matrix
+    epsilon = 1e-8
+    distance_matrix += epsilon
+
+    # Inverse of distance as a base heuristic (favor shorter edges)
+    inv_dist = 1 / distance_matrix
+
+    # Apply degree-based penalty: punish edges connected to nodes with already high degree in the MST sense
+    n_nodes = distance_matrix.shape[0]
+    degree_bonus = np.zeros_like(inv_dist)
+
+    for i in range(n_nodes):
+        sorted_edges = np.argsort(distance_matrix[i])
+        for k in range(min(3, n_nodes)):  # Top 3 closest neighbors get a boost
+            j = sorted_edges[k]
+            degree_bonus[i, j] += 0.5
+            degree_bonus[j, i] += 0.5  # Symmetric update
+
+    # Combine inverse distance and degree bonus
+    combined = inv_dist + 0.2 * degree_bonus
+
+    # Sparsify: keep only top 30% of edges per row
+    threshold = np.percentile(combined, 70, axis=1, keepdims=True)
+    sparse_mask = combined >= threshold
+    result = combined * sparse_mask
+
+    return result
+```

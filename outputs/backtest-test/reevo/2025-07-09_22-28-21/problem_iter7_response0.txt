@@ -1,0 +1,41 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Dynamic lookback window based on recent volatility (shorter in high volatility periods)
+    volatility = (df['high'] - df['low']) / df['close'].shift(1)
+    dynamic_window = 5 + (10 * (volatility.rolling(window=20).mean())).clip(0, 1).astype(int)
+
+    # Normalized price position with emphasis on closing price and adaptive range
+    def custom_rolling_max(x):
+        return x.rolling(window=max(5, int(dynamic_window.loc[x.name]))).max()
+    def custom_rolling_min(x):
+        return x.rolling(window=max(5, int(dynamic_window.loc[x.name]))).min()
+
+    recent_high = df.groupby(level=1)['high'].apply(custom_rolling_max)
+    recent_low = df.groupby(level=1)['low'].apply(custom_rolling_min)
+    normalized_price = (df['close'] - recent_low) / (recent_high - recent_low + 1e-7)
+
+    # Smoothed volume ratio with behavioral timing (volume relative to prior period with trend awareness)
+    volume_ma = df.groupby(level=1)['volume'].apply(
+        lambda x: x.shift(1).rolling(window=lambda y: min(10, len(y)), min_periods=1).mean()
+    )
+    volume_ratio = df['volume'] / (volume_ma + 1e-7)
+    smoothed_volume = volume_ratio.ewm(span=5).mean().clip(lower=0.3, upper=3.0)
+
+    # Momentum component with decay weighting (more weight to recent returns)
+    returns = df['close'].pct_change()
+    momentum = returns.ewm(span=10).mean()
+
+    # Regime-aware weighting using volatility and volume stability
+    volume_volatility = df['volume'].pct_change().rolling(window=10).std()
+    regime_metric = (volatility_weight := 1.0 / (volatility + 1e-7)) * (1.0 / (volume_volatility + 1e-7))
+    regime_weight = regime_metric / regime_metric.mean()
+
+    # Composite alpha factor with regime-aware blending of signals
+    alpha = regime_weight * (
+        normalized_price * 0.4 +
+        (1 - smoothed_volume) * 0.3 +  # Inverse volume activity signal
+        momentum * 0.3
+    )
+
+    return alpha.clip(lower=-1, upper=1)
+```

@@ -1,0 +1,22 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    def MACD(line, fast=12, slow=26, signal=9):
+        ema_fast = line.ewm(span=fast, adjust=False).mean()
+        ema_slow = line.ewm(span=slow, adjust=False).mean()
+        macd_line = ema_fast - ema_slow
+        signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+        return macd_line - signal_line
+    
+    def ROC(series, period=14):
+        return (series / series.shift(period) - 1) * 100
+
+    close_prices = df['close']
+
+    macd_values = MACD(close_prices)
+    roc_values = ROC(close_prices)
+    std_close = close_prices.rolling(window=30).std()
+
+    heuristics_matrix = (macd_values + roc_values) / std_close
+
+    return heuristics_matrix

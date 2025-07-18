@@ -160,7 +160,7 @@ cython_debug/
 #.idea/
 
 
-outputs/
+# outputs/
 gpt.py
 *.npy
 test.ipynb

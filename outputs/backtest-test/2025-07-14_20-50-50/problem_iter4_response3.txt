@@ -1,0 +1,48 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate High-to-Low Range
+    high_to_low_range = df['high'] - df['low']
+    
+    # Calculate Volatility (Standard Deviation of Close Prices)
+    volatility = df['close'].rolling(window=20).std()
+    
+    # Volatility Adjusted High-to-Low Range Over Close
+    vol_adjusted_range_over_close = (high_to_low_range / volatility) / df['close']
+    
+    # Moving Average Convergence Divergence (MACD)
+    short_ema = df['close'].ewm(span=12, adjust=False).mean()
+    long_ema = df['close'].ewm(span=26, adjust=False).mean()
+    macd_line = short_ema - long_ema
+    signal_line = macd_line.ewm(span=9, adjust=False).mean()
+    
+    # Volume Weighted High-to-Low Range
+    volume_weighted_range = high_to_low_range * df['volume']
+    
+    # Price Momentum with Volume
+    price_change = df['close'] - df['close'].shift(1)
+    momentum_with_volume = (price_change * df['volume']) / df['close'].shift(1)
+    
+    # Combine all alpha factors into a single DataFrame
+    alpha_factors = pd.DataFrame({
+        'Vol_Adjusted_Range_Over_Close': vol_adjusted_range_over_close,
+        'MACD_Signal_Line': signal_line,
+        'Volume_Weighted_Range': volume_weighted_range,
+        'Momentum_With_Volume': momentum_with_volume
+    })
+    
+    # Normalize the alpha factors (optional but can be useful for comparison)
+    alpha_factors = (alpha_factors - alpha_factors.mean()) / alpha_factors.std()
+    
+    # Generate the final alpha factor as a weighted sum of the individual factors
+    final_alpha_factor = (
+        0.25 * alpha_factors['Vol_Adjusted_Range_Over_Close'] +
+        0.25 * alpha_factors['MACD_Signal_Line'] +
+        0.25 * alpha_factors['Volume_Weighted_Range'] +
+        0.25 * alpha_factors['Momentum_With_Volume']
+    )
+    
+    return final_alpha_factor
+```

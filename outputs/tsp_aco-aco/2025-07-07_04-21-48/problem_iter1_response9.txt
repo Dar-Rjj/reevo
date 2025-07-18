@@ -1,0 +1,25 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero
+    epsilon = 1e-8
+    dist = distance_matrix + epsilon
+
+    # Inverse distance heuristic (higher is better)
+    inv_dist = 1 / dist
+
+    # Normalize row-wise to emphasize local choices
+    row_norm = inv_dist / inv_dist.sum(axis=1, keepdims=True)
+
+    # Sparsify: mask out values below a certain quantile threshold
+    threshold = np.quantile(row_norm[row_norm < np.inf]], 0.75)
+    sparse_mask = row_norm >= threshold
+
+    # Combine with some global edge importance using column normalization
+    col_norm = inv_dist / inv_dist.sum(axis=0, keepdims=True)
+    combined = 0.6 * row_norm + 0.4 * col_norm
+
+    # Zero out unpromising edges
+    combined *= sparse_mask
+
+    return combined
+```

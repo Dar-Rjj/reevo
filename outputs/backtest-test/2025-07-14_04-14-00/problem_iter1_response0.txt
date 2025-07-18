@@ -1,0 +1,24 @@
+```python
+import pandas as pd
+
+def heuristics_v2(df, n=14):
+    # Calculate True Range
+    df['Previous Close'] = df['close'].shift(1)
+    df['High-Low'] = df['high'] - df['low']
+    df['High-PrevClose'] = (df['high'] - df['Previous Close']).abs()
+    df['PrevClose-Low'] = (df['Previous Close'] - df['low']).abs()
+    df['True Range'] = df[['High-Low', 'High-PrevClose', 'PrevClose-Low']].max(axis=1)
+
+    # Compute Average True Range over n periods
+    df['ATR'] = df['True Range'].rolling(window=n).mean()
+
+    # Determine Direction
+    df['Direction'] = 0
+    df.loc[df['close'] > df['close'].shift(n), 'Direction'] = 1
+    df.loc[df['close'] < df['close'].shift(n), 'Direction'] = -1
+
+    # Create ATR-based Momentum Factor
+    df['ATR Momentum Factor'] = df['Direction'] * df['ATR']
+
+    return df['ATR Momentum Factor']
+```

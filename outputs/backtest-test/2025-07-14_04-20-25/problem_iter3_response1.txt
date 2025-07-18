@@ -1,0 +1,32 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday Log Returns
+    df['Open_to_Close_Log_Return'] = np.log(df['close'] / df['open'])
+    df['High_to_Low_Log_Range'] = np.log(df['high'] / df['low'])
+
+    # Compute Volume-Weighted Intraday Momentum
+    total_volume = df['volume'].sum()
+    df['Volume_Weights'] = df['volume'] / total_volume
+    df['Weighted_Open_to_Close_Log_Return'] = df['Open_to_Close_Log_Return'] * df['Volume_Weights']
+    df['Weighted_High_to_Low_Log_Range'] = df['High_to_Low_Log_Range'] * df['Volume_Weights']
+    df['Weighted_Sum_of_Log_Returns'] = df['Weighted_Open_to_Close_Log_Return'] + df['Weighted_High_to_Low_Log_Range']
+
+    # Apply Smoothing and Trend Indicator
+    ema_weighted_log_returns = df['Weighted_Sum_of_Log_Returns'].ewm(span=10, adjust=False).mean()
+    ema_volume = df['volume'].ewm(span=10, adjust=False).mean()
+    fast_ema = ema_weighted_log_returns.ewm(span=12, adjust=False).mean()
+    slow_ema = ema_weighted_log_returns.ewm(span=26, adjust=False).mean()
+    df['MACD'] = fast_ema - slow_ema
+
+    # Incorporate Volatility Adjustment
+    std_log_returns = df['Open_to_Close_Log_Return'].rolling(window=10).std()
+    adjusted_weighted_sum = df['Weighted_Sum_of_Log_Returns'] / std_log_returns
+
+    # Final Alpha Factor
+    df['Alpha_Factor'] = (adjusted_weighted_sum + df['MACD']) * (df['volume'] / ema_volume)
+
+    return df['Alpha_Factor']
+```

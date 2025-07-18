@@ -1,0 +1,12 @@
+import pandas as pd
+
+def heuristics_v2(df):
+    # Example transformation: calculate the simple moving average for 5 days for closing price
+    sma_5 = df['close'].rolling(window=5).mean()
+    # Calculate the relative strength by comparing the close price to its SMA
+    rs = (df['close'] - sma_5) / sma_5
+    # Generate a volatility measure using the standard deviation of the past 10 days' closing prices
+    volatility = df['close'].rolling(window=10).std()
+    # Combine the relative strength and inverse of volatility as a new heuristic
+    heuristics_matrix = (rs * (1/volatility)).fillna(0)
+    return heuristics_matrix

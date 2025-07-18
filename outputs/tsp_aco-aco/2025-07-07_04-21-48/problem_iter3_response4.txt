@@ -1,0 +1,45 @@
+```python
+def heuristics_v2(distance_matrix: np.ndarray) -> np.ndarray:
+    # Avoid division by zero and very small distances causing instability
+    epsilon = 1e-8
+    n = distance_matrix.shape[0]
+    
+    # Base heuristic: inverse of the distance (favoring shorter edges)
+    inv_distance = 1.0 / (distance_matrix + epsilon)
+    
+    # Local density normalization per row to highlight promising local edges
+    row_wise_norm = inv_distance / (inv_distance.sum(axis=1, keepdims=True) + epsilon)
+    
+    # Node importance as the sum of inverse distances (row-wise)
+    node_importance = inv_distance.sum(axis=1)
+    node_importance /= (node_importance.max() + epsilon)  # Normalize
+    
+    # Mutual proximity: penalize if an edge is not mutually among the closest for both nodes
+    k_neighbors = 5  # Can be made adaptive based on n
+    proximity_mask = np.zeros_like(inv_distance, dtype=bool)
+    for i in range(n):
+        nearest_from_i = np.argsort(-inv_distance[i])[:k_neighbors]
+        for j in nearest_from_i:
+            nearest_to_j = np.argsort(-inv_distance[:, j])[:k_neighbors]
+            if i in nearest_to_j:
+                proximity_mask[i, j] = True
+    mutual_proximity = np.where(proximity_mask, 1.0, 0.0)
+    
+    # Degree approximation and penalty for high-attractiveness connections
+    degree = inv_distance.sum(axis=1)
+    degree_penalty = np.outer(degree, degree)
+    degree_penalty /= (degree_penalty.max() + epsilon)  # Normalize
+
+    # Edge desirability score: weighted product of multiple factors
+    desirability = row_wise_norm * inv_distance * mutual_proximity * (1.0 / (degree_penalty + 1.0))
+    
+    # Adaptive thresholding to sparsify the matrix
+    upper_tri = combined[np.triu_indices(n, k=1)]
+    threshold = np.percentile(upper_tri, 30)  # Set bottom 30% to zero
+    desirability[desirability < threshold] = 0.0
+
+    # Symmetrize final output for consistency
+    desirability = (desirability + desirability.T) / 2.0
+
+    return desirability
+```

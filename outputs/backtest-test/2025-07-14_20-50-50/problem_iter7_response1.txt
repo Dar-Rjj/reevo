@@ -1,0 +1,51 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate High-to-Low Range
+    high_to_low_range = df['high'] - df['low']
+    
+    # Calculate Volatility (Standard Deviation of Close Prices)
+    volatility = df['close'].rolling(window=30).std()
+    
+    # Adjust for Volatility
+    adjusted_high_to_low_range = high_to_low_range / volatility
+    
+    # Divide by Close Price
+    volatility_adjusted_hl_over_close = adjusted_high_to_low_range / df['close']
+    
+    # Calculate Short-Term EMA (12-period)
+    short_ema = df['close'].ewm(span=12, adjust=False).mean()
+    
+    # Calculate Long-Term EMA (26-period)
+    long_ema = df['close'].ewm(span=26, adjust=False).mean()
+    
+    # Calculate MACD Line
+    macd_line = short_ema - long_ema
+    
+    # Calculate Signal Line (9-period EMA of MACD Line)
+    signal_line = macd_line.ewm(span=9, adjust=False).mean()
+    
+    # Calculate Volume Weighted High-to-Low Range
+    volume_weighted_hl_range = high_to_low_range * df['volume']
+    
+    # Calculate Price Change
+    price_change = df['close'].diff(1)
+    
+    # Multiply by Volume
+    price_momentum_with_volume = price_change * df['volume']
+    
+    # Divide by Previous Close
+    price_momentum_with_volume /= df['close'].shift(1)
+    
+    # Combine all the factors into a single alpha factor
+    alpha_factor = (
+        0.4 * volatility_adjusted_hl_over_close +
+        0.3 * (macd_line - signal_line) +
+        0.2 * volume_weighted_hl_range +
+        0.1 * price_momentum_with_volume
+    )
+    
+    return alpha_factor
+```

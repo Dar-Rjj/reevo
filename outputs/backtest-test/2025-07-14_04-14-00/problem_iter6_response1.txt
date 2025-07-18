@@ -1,0 +1,55 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Intraday Volatility
+    df['high_low_range'] = df['high'] - df['low']
+    df['true_range'] = df[['high', 'low', 'close']].apply(lambda x: max(x) - min(x), axis=1)
+    
+    # Construct Intraday Price Momentum
+    df['intraday_return'] = (df['close'] - df['open']) / df['open']
+    df['short_term_ema'] = df['intraday_return'].ewm(span=5, adjust=False).mean()
+    df['medium_term_ema'] = df['intraday_return'].ewm(span=20, adjust=False).mean()
+    df['long_term_ema'] = df['intraday_return'].ewm(span=50, adjust=False).mean()
+    
+    # Measure Trading Activity
+    df['volume_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
+    df['dollar_volume'] = df['volume'] * df['close']
+    
+    # Integrate Volume Shock
+    volume_shock_threshold = 2.0  # Define a threshold for volume shock
+    df['volume_shock'] = (df['volume'] > volume_shock_threshold * df['volume'].shift(1)).astype(int)
+    
+    # Adjust Intraday Volatility based on Volume Shock
+    df['adjusted_volatility'] = df['true_range'] * (1 + 0.5 * df['volume_shock'])
+    
+    # Adjust Intraday Price Momentum based on Volume Shock
+    df['adjusted_momentum'] = df['intraday_return'] * (1 + 0.5 * df['volume_shock'])
+    
+    # Refine EMA Periods
+    df['refined_short_term_ema'] = df['intraday_return'].ewm(span=7, adjust=False).mean()
+    df['refined_medium_term_ema'] = df['intraday_return'].ewm(span=30, adjust=False).mean()
+    df['refined_long_term_ema'] = df['intraday_return'].ewm(span=60, adjust=False).mean()
+    
+    # Consider High-Low Range Normalization
+    df['normalized_high_low_range'] = (df['high'] - df['low']) / df['close']
+    
+    # Update True Range Adjustment
+    df['adjusted_true_range'] = df[['high', 'low', 'close']].apply(lambda x: max(x) - min(x), axis=1) * (1 + 0.5 * df['volume_shock'])
+    
+    # Construct the final alpha factor
+    alpha_factor = (
+        df['adjusted_volatility'] + 
+        df['adjusted_momentum'] + 
+        df['volume_ratio'] + 
+        df['dollar_volume'] + 
+        df['refined_short_term_ema'] + 
+        df['refined_medium_term_ema'] + 
+        df['refined_long_term_ema'] + 
+        df['normalized_high_low_range'] + 
+        df['adjusted_true_range']
+    )
+    
+    return alpha_factor
+```

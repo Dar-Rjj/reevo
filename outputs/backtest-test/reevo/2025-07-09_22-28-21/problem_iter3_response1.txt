@@ -1,0 +1,29 @@
+```python
+def heuristics_v2(df: pd.DataFrame) -> pd.Series:
+    # Compute normalized price position in dynamic recent range using median sensitivity
+    recent_high = df['high'].rolling(window=15).max()
+    recent_low = df['low'].rolling(window=15).min()
+    price_position = (df['close'] - recent_low) / (recent_high - recent_low + 1e-7)
+
+    # Adjusted for momentum confirmation using close-to-close changes
+    momentum_confirmation = df['close'].pct_change(periods=5).abs().clip(lower=0.0, upper=0.2)
+    
+    # Volume surge detection relative to adaptive baseline
+    volume_ma = df['volume'].rolling(window=20).mean()
+    volume_std = df['volume'].rolling(window=20).std()
+    volume_zscore = (df['volume'] - volume_ma) / (volume_std + 1e-7)
+    significant_volume = volume_zscore.clip(lower=0)
+
+    # Regime detection based on range expansion/contraction
+    range_expansion = ((recent_high - recent_low) / (df['close'].shift(1) + 1e-7)).pct_change(periods=10)
+    regime_factor = 1.0 + range_expansion.rank(pct=True).fillna(0.5)  # Normalize regime impact
+
+    # Adaptive weighting of components based on market conditions
+    adaptive_weight_price = 0.6 + 0.2 * (1 - regime_factor.clip(0, 2))
+    adaptive_weight_volume = 0.4 * regime_factor.clip(0, 2)
+
+    # Composite alpha combining price action, volume, and regime awareness
+    alpha = (price_position * adaptive_weight_price) + (significant_volume * adaptive_weight_volume) * (1 + momentum_confirmation)
+
+    return alpha.clip(lower=-1, upper=1)
+```

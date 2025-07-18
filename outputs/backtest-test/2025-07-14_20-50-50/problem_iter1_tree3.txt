@@ -1,0 +1,15 @@
+```txt
+High-Low Range Adjusted by Volume
+├── Calculate High-Low Range
+│   ├── Use High price
+│   └── Subtract Low price
+└── Divide by Average Price
+    ├── Calculate Average Price
+    │   ├── Sum of High and Low
+    │   └── Divide by 2
+    └── Multiply by Volume
+        ├── Use Volume
+        └── Adjust for Volume
+            ├── Inverse of Volume
+            └── Multiply by High-Low Range
+```

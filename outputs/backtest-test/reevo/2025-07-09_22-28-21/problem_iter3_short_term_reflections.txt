@@ -1,0 +1,4 @@
+Focus on simplicity, normalization, and adaptive weighting. Use price action relative to recent ranges and incorporate volume dynamics for robust signals.
+Focus on simplicity, interpretability, and direct price action relative to range.
+Focus on simplicity, interpretability, and robustness. Prioritize features with clear economic intuition and avoid overfitting.
+Focus on simplicity, interpretability, and robustness. Prioritize ratios of price extremes and avoid overfitting noisy components.

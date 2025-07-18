@@ -1,0 +1,53 @@
+[*] Running ...
+Traceback (most recent call last):
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 63, in <module>
+    mean_ic = solve(market_data)
+              ^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 21, in solve
+    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x)).reset_index(level=0, drop=True)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/groupby.py", line 1825, in apply
+    result = self._python_apply_general(f, self._selected_obj)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/groupby.py", line 1886, in _python_apply_general
+    values, mutated = self._grouper.apply_groupwise(f, data, self.axis)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/groupby/ops.py", line 919, in apply_groupwise
+    res = f(group)
+          ^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/eval.py", line 21, in <lambda>
+    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x)).reset_index(level=0, drop=True)
+                                                                              ^^^^^^^^^^^^^
+  File "/home/rjj/reevo/problems/backtest/gpt.py", line 15, in heuristics_v2
+    long_mom = df['close'].pct_change(periods=60)
+                                                  
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/series.py", line 6363, in truediv
+    return self._flex_method(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/series.py", line 6257, in _flex_method
+    return self._binop(other, op, level=level, fill_value=fill_value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/series.py", line 6201, in _binop
+    this, other = self.align(other, level=level, join="outer", copy=False)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/generic.py", line 10466, in align
+    left, _right, join_index = self._align_series(
+                               ^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/generic.py", line 10583, in _align_series
+    join_index, lidx, ridx = self.index.join(
+                             ^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/indexes/base.py", line 279, in join
+    join_index, lidx, ridx = meth(self, other, how=how, level=level, sort=sort)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/indexes/base.py", line 4622, in join
+    return self._join_multi(other, how=how)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/indexes/base.py", line 4756, in _join_multi
+    other_jnlevels = other.reorder_levels(self.names)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/indexes/multi.py", line 2577, in reorder_levels
+    result = self._reorder_ilevels(order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/rjj/miniconda3/envs/ReEvo/lib/python3.11/site-packages/pandas/core/indexes/multi.py", line 2582, in _reorder_ilevels
+    raise AssertionError(
+AssertionError: Length of order must be same as number of levels (2), got 3

@@ -1,0 +1,32 @@
+```python
+import pandas as pd
+
+def heuristics_v2(data):
+    # Calculate Intraday Log Returns
+    data['Open_to_Close_Log_Return'] = (data['close'] / data['open']).apply(lambda x: math.log(x))
+    data['High_to_Low_Log_Range'] = (data['high'] / data['low']).apply(lambda x: math.log(x))
+
+    # Compute Volume-Weighted Intraday Momentum
+    total_volume = data['volume'].sum()
+    total_amount = data['amount'].sum()
+    data['Volume_Weight'] = data['volume'] / total_volume
+    data['Amount_Weight'] = data['amount'] / total_amount
+    data['Combined_Weight'] = 0.5 * data['Volume_Weight'] + 0.5 * data['Amount_Weight']
+    data['Weighted_Sum_Log_Returns'] = (data['Open_to_Close_Log_Return'] + data['High_to_Low_Log_Range']) * data['Combined_Weight']
+
+    # Apply Smoothing and Trend Indicator
+    data['EMA_Weighted_Log_Returns'] = data['Weighted_Sum_Log_Returns'].ewm(span=12, adjust=False).mean()
+    data['EMA_Volume_Amount'] = data[['volume', 'amount']].sum(axis=1).ewm(span=12, adjust=False).mean()
+    fast_ema = data['Weighted_Sum_Log_Returns'].ewm(span=12, adjust=False).mean()
+    slow_ema = data['Weighted_Sum_Log_Returns'].ewm(span=26, adjust=False).mean()
+    data['MACD'] = fast_ema - slow_ema
+
+    # Incorporate Volatility Adjustment
+    data['Log_Returns_Std'] = data['Weighted_Sum_Log_Returns'].rolling(window=20).std()
+    data['Volatility_Adjusted_Momentum'] = data['Weighted_Sum_Log_Returns'] / data['Log_Returns_Std']
+
+    # Final Alpha Factor
+    data['Alpha_Factor'] = data['EMA_Weighted_Log_Returns'] + data['MACD'] + data['Volatility_Adjusted_Momentum']
+
+    return data['Alpha_Factor']
+```

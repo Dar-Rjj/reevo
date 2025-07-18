@@ -1,0 +1,18 @@
+```python
+def heuristics_v2(df):
+    # Calculate High-to-Low Range
+    high_low_range = df['high'] - df['low']
+    
+    # Normalize by Close price
+    normalized_range = high_low_range / df['close']
+    
+    # Calculate Volume Trend
+    df['volume_shifted'] = df['volume'].shift(1)
+    volume_trend = df['volume'] / df['volume_shifted']
+    volume_trend = volume_trend.fillna(1)  # Handle the first day with no previous data
+    
+    # Final Alpha Factor
+    alpha_factor = normalized_range * volume_trend
+    
+    return alpha_factor
+```

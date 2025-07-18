@@ -1,0 +1,36 @@
+```python
+import pandas as pd
+import numpy as np
+
+def heuristics_v2(df):
+    # Calculate Log Returns
+    df['log_return_open_close'] = np.log(df['close'] / df['open'])
+    df['log_return_high_low'] = np.log(df['high'] / df['low'])
+
+    # Compute IVAM
+    # Weights by Volume Ratio
+    total_volume = df['volume'].sum()
+    df['volume_ratio'] = df['volume'] / total_volume
+
+    # Weighted Sum of Log Returns
+    df['weighted_log_return'] = (df['log_return_open_close'] + df['log_return_high_low']) * df['volume_ratio']
+
+    # Smoothing Factor - Exponential Moving Average (EMA)
+    alpha_ema = 0.1  # You can adjust this parameter
+    df['ema_log_return'] = df['weighted_log_return'].ewm(alpha=alpha_ema, adjust=False).mean()
+    df['ema_volume'] = df['volume'].ewm(alpha=alpha_ema, adjust=False).mean()
+
+    # Standard Deviation Adjustment
+    log_returns = df['log_return_open_close']
+    std_log_returns = log_returns.std()
+    adjusted_weighted_sum = df['weighted_log_return'] / std_log_returns
+
+    # Adjust for Volatility
+    recent_window = 30  # Define the recent time window
+    volatility = df['log_return_open_close'].rolling(window=recent_window).std().fillna(0)  # Fill NaN to avoid zero division
+    volatility_adj = 1 / (volatility + 1e-6)  # Ensure non-zero volatility
+
+    df['ivam_factor'] = adjusted_weighted_sum * volatility_adj
+
+    return df['ivam_factor']
+```

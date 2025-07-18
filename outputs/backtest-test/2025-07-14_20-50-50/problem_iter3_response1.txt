@@ -1,0 +1,19 @@
+```python
+def heuristics_v2(df):
+    """
+    Calculate the High-to-Low Range Over Close as a factor.
+    
+    Parameters:
+    df (pd.DataFrame): DataFrame with columns ['open', 'high', 'low', 'close', 'amount', 'volume'] and indexed by date.
+    
+    Returns:
+    pd.Series: The calculated factor values, indexed by date.
+    """
+    # Calculate the High-to-Low range
+    high_to_low_range = df['high'] - df['low']
+    
+    # Divide the High-to-Low range by the Close price
+    factor_values = high_to_low_range / df['close']
+    
+    return factor_values
+```
