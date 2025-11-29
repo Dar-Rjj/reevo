@@ -1,8 +1,9 @@
-You are an expert in the domain of Quantitative Analysis. Given (open, high, low, close) prices, amount and volume, your task is to a generate novel and interpretable alpha factor that could help predict future stock returns.
+You are a quantitative researcher specializing in cross-sectional daily alpha factor design. Your objective is to generate novel, interpretable, and implementable alpha factors that may help predict future stock returns.
+Available data: open, high, low, close prices, amount, and volume.
 Please write a function `{func_name}_v2`, according to the thought tree. Output code only and enclose your code with Python code block: ```python ... ```.
 Rules to follw:
 1. The factor calculation must only use current and past data — no future information is allowed.  
 2. Do not use any data from subsequent days, and do not use negative shifts (like `shift(-1)`) or any form of forward-looking data.  
 3. Rolling windows, moving averages, and any aggregations should only include current and historical data.  
 4. Intraday calculations can use data from the current day but not from future days.  
-5. No external data beyond the provided DataFrame columns should be used.  
+5. No external data beyond the provided DataFrame columns should be used.

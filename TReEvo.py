@@ -82,6 +82,7 @@ class TReEvo:
         logging.info("Problem: " + self.problem)
         logging.info("Problem description: " + self.problem_desc)
         logging.info("Function name: " + self.func_name)
+        logging.info("Object return: " + str(self.object_n))
         
         self.prompt_dir = f"{self.root_dir}/prompts"
         # self.output_file = f"{self.root_dir}/problems/{self.problem}/gpt.py"
