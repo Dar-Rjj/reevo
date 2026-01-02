@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cd reevo
+# cd Treevo
 # conda activate ReEvo
 # sh test_spx.sh
 
@@ -9,7 +9,8 @@ python main.py \
     init_pop_size=10 \
     pop_size=10 \
     max_fe=200 \
-    timeout=20 \
-    algorithm=treevoo \
-    llm_client=qwen3_api \
-    llm_client.api_key='sk-fb4917a77b7d4a2b88369204d7435aba'
+    object_n=5 \
+    timeout=10 \
+    algorithm=TreEvo \
+    llm_client=openrouter \
+    llm_client.api_key='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'

@@ -1,0 +1,21 @@
+Capturing short-term price movements and trading activity with a single-factor approach
+├─ Representing intraday shifts based on open–close price relationships
+│   ├─ Using the relative position of open and close prices
+│   │   ├─ open_to_prev_close_return: (open - prev_close) / prev_close
+│   │   └─ close_to_prev_close_return: (close - prev_close) / prev_close
+│   └─ Using the direction and magnitude of intraday price change
+│       ├─ intraday_return: (close - open) / open
+│       └─ intraday_sign: sign(close - open)  (1 = up, -1 = down)
+├─ Characterizing intraday volatility structure based on high–low price range
+│   ├─ Using the range between high and low prices
+│   │   ├─ true_range: high - low
+│   │   └─ normalized_range: (high - low) / prev_close
+│   └─ Describing candlestick amplitude using high, low and close
+│       ├─ upper_shadow: high - max(open, close)
+│       ├─ body_size: abs(close - open)
+│       └─ lower_shadow: min(open, close) - low
+└─ Reflecting trading activity using volume and transaction amount
+    ├─ Measuring activity intensity with volume
+    │   └─ volume_ratio: volume / rolling_mean(volume, n)
+    └─ Measuring capital participation using transaction amount
+        └─ turnover_ratio: amount / rolling_mean(amount, n)

@@ -9,8 +9,8 @@ python main.py \
     init_pop_size=10 \
     pop_size=10 \
     max_fe=200 \
-    object_n=5 \
+    object_n=20 \
     timeout=10 \
-    algorithm=TReEvo \
-    llm_client=deepseek \
-    llm_client.api_key='sk-be2718f6b577422c82011a304204a0a8'
+    algorithm=TreEvo \
+    llm_client=openrouter \
+    llm_client.api_key='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'

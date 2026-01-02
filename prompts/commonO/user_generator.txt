@@ -1,2 +1,3 @@
-Write a thought tree for {problem_desc}
-{tree_desc}
+Generate a thought tree for {problem_desc}
+Your response only outputs txt code of the ASCII tree.
+Format your code as a txt code block: ```txt ... ```.

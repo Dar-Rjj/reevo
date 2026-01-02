@@ -96,13 +96,11 @@ class TreEvo:
         self.func_signature = file_to_string(f'{problem_prompt_path}/func_signature.txt')
         self.func_desc = file_to_string(f'{problem_prompt_path}/func_desc.txt')
         self.seed_tree = file_to_string(f'{problem_prompt_path}/seed_tree.txt')
-        self.tree_desc = file_to_string(f'{problem_prompt_path}/tree_desc.txt')
         if os.path.exists(f'{problem_prompt_path}/external_knowledge.txt'):
             self.external_knowledge = file_to_string(f'{problem_prompt_path}/external_knowledge.txt')
             self.long_term_reflection_str = self.external_knowledge
         else:
             self.external_knowledge = ""
-        
         
         # Common prompts
         self.system_generator_prompt = file_to_string(f'{self.prompt_dir}/commonO/system_generator.txt')
@@ -114,7 +112,6 @@ class TreEvo:
         )
         self.user_generator_prompt = file_to_string(f'{self.prompt_dir}/commonO/user_generator.txt').format(
             problem_desc=self.problem_desc,
-            tree_desc=self.tree_desc,
             )
         self.seed_prompt = file_to_string(f'{self.prompt_dir}/commonO/seed.txt').format(
             seed_tree=self.seed_tree
@@ -175,7 +172,7 @@ class TreEvo:
         
         # Generate responses
         system = self.system_generator_prompt
-        user = self.user_generator_prompt + "\n" + self.seed_prompt + "\n" + self.long_term_reflection_str
+        user = self.user_generator_prompt + "\n" + self.seed_prompt
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         logging.info("Initial Population Tree Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
 
@@ -446,7 +443,7 @@ class TreEvo:
             if user is None:
                 logging.warning(f"Tree is None for individual with response_id {individual['response_id']}. Skipping code generation.")
                 user = ""
-            logging.info(f"Generating code for tree:\n {user}")
+            logging.info(f"Generating code for the tree:\n{user}")
             messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
             messages_lst.append(messages)
         

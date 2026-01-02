@@ -1,10 +1,15 @@
 {user_generator}
 
 [Pruning]
-Pruning simplifies a thought tree by removing redundant or unnecessary components, producing a more concise thought that retains the core reasoning idea.
+Pruning simplifies a thought tree by removing redundant or low-importance components.
+The main idea and overall structure should be preserved.
+Do not introduce new concepts or rewrite existing ones.
 
 [Parent tree]
 {parent_tree}
 
 [Improved tree]
-Please write a new tree structure according to Pruning. Output tree only and enclose your code with txt code block: ```txt ... ```.
+Generate a single coherent tree structure.
+Each remaining node should directly support the core reasoning idea.
+Your response only outputs txt code of the thought tree.
+Format your code as a txt code block: ```txt ... ```.

@@ -1,7 +1,8 @@
 {user_generator}
 
 [Crossover]
-Crossover refer to two thought trees and generate a new thought tree that synthesizes reasoning components from both parents while maintaining overall coherence.
+Crossover generates a new factor tree by refering the high-level ideas from parent trees.
+The new tree should preserve logical consistency and remain interpretable.
 
 [Parent tree 1]
 {parent_tree_1}
@@ -10,4 +11,9 @@ Crossover refer to two thought trees and generate a new thought tree that synthe
 {parent_tree_2}
 
 [Improved tree]
-Please write a new tree structure according to Crossover. Output tree only and enclose your code with txt code block: ```txt ... ```.
+Generate a single coherent tree structure.
+The root should represent the shared main idea.
+Child nodes should be meaningful refinements of their parent.
+Limit unnecessary branches.
+Your response only outputs txt code of the thought tree.
+Format your code as a txt code block: ```txt ... ```.

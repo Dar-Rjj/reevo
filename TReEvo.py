@@ -449,7 +449,7 @@ class TReEvo:
             if user is None:
                 logging.warning(f"Tree is None for individual with response_id {individual['response_id']}. Skipping code generation.")
                 user = ""
-            logging.info(f"Generating code for tree:\n {user}")
+            logging.info(f"Generating code for tree:\n{user}")
             messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
             messages_lst.append(messages)
         
