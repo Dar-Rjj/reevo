@@ -1,0 +1,14 @@
+{user_generator}
+
+[Sub-idea Mutation]
+Sub-idea Mutation generate a new tree by changing one sub-idea of the parent tree.
+First, choose one internal node of the tree. Then introduce a new sub-idea to replace the old sub-idea while keeping logical consistency of the tree.
+The new tree should be logical and interpretable.
+
+[Parent tree]
+{parent_tree}
+
+[New tree]
+Generate a single coherent tree structure.
+Your response only outputs txt code of the thought tree.
+Format your code as a txt code block: ```txt ... ```.

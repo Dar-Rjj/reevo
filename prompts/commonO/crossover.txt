@@ -10,7 +10,7 @@ The new tree should preserve logical consistency and remain interpretable.
 [Parent tree 2]
 {parent_tree_2}
 
-[Improved tree]
+[New tree]
 Generate a single coherent tree structure.
 The root should represent the shared main idea.
 Child nodes should be meaningful refinements of their parent.

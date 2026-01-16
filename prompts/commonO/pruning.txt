@@ -8,7 +8,7 @@ Do not introduce new concepts or rewrite existing ones.
 [Parent tree]
 {parent_tree}
 
-[Improved tree]
+[New tree]
 Generate a single coherent tree structure.
 Each remaining node should directly support the core reasoning idea.
 Your response only outputs txt code of the thought tree.

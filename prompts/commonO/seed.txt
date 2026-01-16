@@ -1,4 +1,4 @@
 {seed_tree}
 
-Refering to the format of a trivial design above, generate a new factor and give the ASCII tree of it.
+Refering to the format of a trivial design above, be very creative to generate a totally different factor and give the ASCII tree of it.
 Your response only outputs txt code of the ASCII tree. Format your code as a txt code block: ```txt ... ```.

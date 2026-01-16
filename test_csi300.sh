@@ -9,7 +9,7 @@ python main.py \
     init_pop_size=10 \
     pop_size=10 \
     max_fe=200 \
-    object_n=20 \
+    object_n=5 \
     timeout=10 \
     algorithm=TreEvo \
     llm_client=openrouter \

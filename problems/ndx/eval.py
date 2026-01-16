@@ -25,7 +25,7 @@ def load_heuristic_func(code_path):
 
 def solve(market_data, heuristics, mood, object_n):
     # 计算每只股票的因子值
-    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x.droplevel('stock_code')))
+    market_data['factor'] = market_data.groupby('stock_code', group_keys=False).apply(lambda g: heuristics(g))
 
     # 计算未来6日收益率
     market_data['future_return'] = market_data.groupby('stock_code')['close'].shift(-object_n) / market_data['close'] - 1
@@ -46,6 +46,9 @@ def solve(market_data, heuristics, mood, object_n):
         daily = market_data.xs(date, level='date')
         factors = daily['factor']
         returns = daily['future_return']
+        eps = (np.random.rand(len(factors)) * 2 - 1) * 1e-7
+        factors += eps  # 添加微小扰动以避免完全相等
+
         mask = factors.notna() & returns.notna() & np.isfinite(factors) & np.isfinite(returns)
         if mask.sum() >= 10:
             ic, _ = pearsonr(factors[mask], returns[mask])

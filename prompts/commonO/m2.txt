@@ -1,0 +1,14 @@
+{user_generator}
+
+[Parameter Mutation]
+Parameter Mutation generate a new tree by changing the parameters in the parent tree while maintaining the idea of the tree.
+The Parameters are all leaf nodes in the tree.
+The new tree should be logical and interpretable.
+
+[Parent tree]
+{parent_tree}
+
+[New tree]
+Generate a single coherent tree structure.
+Your response only outputs txt code of the thought tree.
+Format your code as a txt code block: ```txt ... ```.

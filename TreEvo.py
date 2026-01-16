@@ -6,6 +6,7 @@ import pandas as pd
 import os
 import uuid
 import wandb
+import copy
 from datetime import datetime
 from omegaconf import DictConfig
 
@@ -354,7 +355,7 @@ class TreEvo:
         """
         Update after each iteration
         """
-        population = self.population
+        population = copy.deepcopy(self.population)
         objs = [individual["obj"] for individual in population]
         best_obj, best_sample_idx = min(objs), np.argmin(np.array(objs))
         
@@ -373,6 +374,9 @@ class TreEvo:
         logging.info(f"Best obj: {self.best_obj_overall}, Best Code Path: {print_hyperlink(best_path, self.best_code_path_overall)}")
         logging.info(f"Iteration {self.iteration} finished...")
         logging.info(f"Function Evals: {self.function_evals}")
+
+        # best_pop = np.argsort(objs)[:self.cfg.pop_size]
+        # self.population = [population[i] for i in best_pop]
 
         if self.function_evals >= self.wandb_log and self.wandb_log <= self.cfg.max_fe:
             self.test_best_individual()
@@ -499,21 +503,25 @@ class TreEvo:
 
     def mutate(self, population: list[dict]) -> list[dict]:
         """Random mutation. We only mutate the n_pop individual to generate n_pop new individuals."""
-        parent_trees = np.random.choice(population, size=int(self.cfg.pop_size * self.mutation_rate), replace=False)
-        messages_lst = []
+        # parent_trees = np.random.choice(population, size=int(self.cfg.pop_size * self.mutation_rate), replace=False)
 
-        for parent_tree in parent_trees:
-            system = self.system_generator_prompt
-            user = self.mutation_prompt.format(
-                user_generator = self.user_generator_prompt,
-                parent_tree = parent_tree['tree'],
-            )
-            messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
-            messages_lst.append(messages)
-            if self.print_mutate_prompt:
-                logging.info("Mutation Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
-                self.print_mutate_prompt = False
-        responses = self.mutation_llm.multi_chat_completion(messages_lst)
+        parent_trees = ""
+        cnt = 0
+        for individual in population:
+            if individual["exec_success"]:
+                parent_trees += f"No.{cnt} factor:\n{individual['tree']}\n"
+                cnt += 1
+
+        system = self.system_generator_prompt
+        user = self.mutation_prompt.format(
+            user_generator = self.user_generator_prompt,
+            parent_trees = parent_trees,
+        )
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        if self.print_mutate_prompt:
+            logging.info("Mutation Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
+            self.print_mutate_prompt = False
+        responses = self.mutation_llm.multi_chat_completion([messages], int(self.cfg.pop_size * self.mutation_rate))
         population_tree = [self.response_to_tree(response, response_id) for response_id, response in enumerate(responses)]
         
         messages_lst = self.gen_code_prompt(population_tree)
@@ -555,7 +563,43 @@ class TreEvo:
         # Merge population tree and population code into one individual
         population = merge_lists_by_response_id(population, population_tree)
         return population
+    
+    def modified_mutate(self, population: list[dict]) -> list[dict]:
+        parent_trees = np.random.choice(population, size=int(self.cfg.pop_size * self.mutation_rate), replace=False)
+        messages_lst = []
 
+        self.m1_prompt = file_to_string(f'{self.prompt_dir}/commonO/m1.txt')
+        self.m2_prompt = file_to_string(f'{self.prompt_dir}/commonO/m2.txt')
+        for parent_tree in parent_trees:
+            system = self.system_generator_prompt
+            if np.random.rand() < 0.7:
+                user = self.m1_prompt.format(
+                    user_generator = self.user_generator_prompt,
+                    parent_tree = parent_tree['tree'],
+                )
+            else:
+                user = self.m2_prompt.format(
+                    user_generator = self.user_generator_prompt,
+                    parent_tree = parent_tree['tree'],
+                )
+            messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+            messages_lst.append(messages)
+            if self.print_mutate_prompt:
+                logging.info("Modified Mutation Prompt: \nSystem Prompt: \n" + system + "\nUser Prompt: \n" + user)
+                self.print_mutate_prompt = False
+        responses = self.mutation_llm.multi_chat_completion(messages_lst)
+        population_tree = [self.response_to_tree(response, response_id) for response_id, response in enumerate(responses)]
+        
+        messages_lst = self.gen_code_prompt(population_tree)
+        logging.info("Generating Modified Mutation Population Code ...")
+
+        responses = self.generator_llm.multi_chat_completion(messages_lst) # Increase the temperature for diverse initial population
+        population = [self.response_to_individual(response, response_id) for response_id, response in enumerate(responses)]
+
+        # Merge population tree and population code into one individual
+        population = merge_lists_by_response_id(population, population_tree)
+        return population
+        
 
     def evolve(self):
         while self.function_evals < self.cfg.max_fe:
@@ -564,7 +608,7 @@ class TreEvo:
                 raise RuntimeError(f"All individuals are invalid. Please check the stdout files in {os.getcwd()}.")
             # Select
             population_to_select = self.population if (self.elitist is None or self.elitist in self.population) else [self.elitist] + self.population # add elitist to population for selection
-            selected_population = self.rank_select(population_to_select)
+            selected_population = self.random_select(population_to_select)
             if selected_population is None:
                 raise RuntimeError("Selection failed. Please check the population.")
             # Crossover
@@ -579,11 +623,17 @@ class TreEvo:
             self.population.extend(self.evaluate_population(mutated_population))
             # Update
             self.update_iter()
-            # Pruning
-            prunned_population = self.pruning(population_to_select)
+            # Modified Mutate
+            mutated_population = self.modified_mutate(population_to_select)
             # Evaluate
-            self.population.extend(self.evaluate_population(prunned_population))
+            self.population.extend(self.evaluate_population(mutated_population))
             # Update
             self.update_iter()
+            # # Pruning
+            # prunned_population = self.pruning(population_to_select)
+            # # Evaluate
+            # self.population.extend(self.evaluate_population(prunned_population))
+            # # Update
+            # self.update_iter()
 
         return self.best_code_overall, self.best_code_path_overall

@@ -1,16 +1,13 @@
 {user_generator}
 
 [Mutation]
-Mutation transforms the parent tree into a new tree by introducing structural or semantic variations.
-Any idea in the tree may be altered, replaced, or reorganized.
-You could create an absolutely new tree or just change some sub ideas.
-The new tree should preserve logical consistency and remain interpretable.
+Mutation generate the tree of the new factor which is totally different from all parent trees to ensure diversity.
+The new tree should be logical and interpretable.
 
-[Parent tree]
-{parent_tree}
+[Parent trees]
+{parent_trees}
 
-[Improved tree]
+[New tree]
 Generate a single coherent tree structure.
-Ensure each child node is a refinement of its parent.
 Your response only outputs txt code of the thought tree.
 Format your code as a txt code block: ```txt ... ```.
