@@ -1,8 +1,0 @@
-def heuristics_v2(df):
-    df['5d_high'] = df['high'].rolling(window=5).max()
-    df['5d_low'] = df['low'].rolling(window=5).min()
-    df['rel_dist_to_5d_max'] = (df['5d_high'] - df['close']) / (df['5d_high'] - df['5d_low'])
-    df['rel_dist_to_5d_min'] = (df['close'] - df['5d_low']) / (df['5d_high'] - df['5d_low'])
-    df['avg_rel_dist'] = (df['rel_dist_to_5d_max'] + df['rel_dist_to_5d_min']) / 2
-    heuristics_matrix = df['avg_rel_dist'].dropna()
-    return heuristics_matrix

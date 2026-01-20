@@ -1,7 +1,0 @@
-def heuristics_v2(df):
-    hl_diff = df['high'] - df['low']
-    weights = 1 / (df['close'] ** (1/2))
-    weighted_hl_diff_sum = (hl_diff * weights).rolling(window=20).sum()
-    sma_close = df['close'].rolling(window=20).mean()
-    heuristics_matrix = weighted_hl_diff_sum / sma_close
-    return heuristics_matrix

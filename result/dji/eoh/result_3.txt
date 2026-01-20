@@ -1,5 +1,0 @@
-def heuristics_v2(df):
-    median_volume_15 = df['volume'].rolling(window=15).median()
-    prod_high_low_7 = (df['high'] * df['low']).rolling(window=7).mean()
-    heuristics_matrix = median_volume_15 / prod_high_low_7
-    return heuristics_matrix

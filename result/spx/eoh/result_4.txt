@@ -1,7 +1,0 @@
-def heuristics_v2(df):
-    min_close_30 = df['close'].rolling(window=30).min()
-    max_close_60 = df['close'].rolling(window=60).max()
-    ratio_min = df['close'] / min_close_30
-    ratio_max = -df['close'] / max_close_60
-    heuristics_matrix = (ratio_min + ratio_max).dropna()
-    return heuristics_matrix

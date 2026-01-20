@@ -1,8 +1,0 @@
-def heuristics_v2(df):
-    df['daily_return'] = df['close'].pct_change()
-    df['moving_avg_60'] = df['close'].rolling(window=60).mean()
-    df['relative_diff'] = (df['close'] - df['moving_avg_60']) / df['moving_avg_60']
-    df['weighted_diff'] = df['daily_return'] * df['relative_diff']
-    range_60 = df['close'].rolling(window=60).max() - df['close'].rolling(window=60).min()
-    heuristics_matrix = df['weighted_diff'].rolling(window=60).sum() / range_60
-    return heuristics_matrix

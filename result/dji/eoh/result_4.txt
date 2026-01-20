@@ -1,6 +1,0 @@
-def heuristics_v2(df):
-    volume_close_ratio = df['volume'] / df['close']
-    ema_20 = volume_close_ratio.ewm(span=20, adjust=False).mean()
-    ema_100 = volume_close_ratio.ewm(span=100, adjust=False).mean()
-    heuristics_matrix = ema_20 - ema_100
-    return heuristics_matrix

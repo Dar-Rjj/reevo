@@ -1,6 +1,0 @@
-def heuristics_v2(df):
-    df['ratio'] = (df['high'] - df['low']) / df['amount']
-    df['rolling_mean'] = df['ratio'].rolling(window=20).mean()
-    df['close_ewma_50'] = df['close'].ewm(span=50, adjust=False).mean()
-    heuristics_matrix = df['rolling_mean'] / df['close_ewma_50']
-    return heuristics_matrix

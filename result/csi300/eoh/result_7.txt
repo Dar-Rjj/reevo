@@ -1,5 +1,0 @@
-def heuristics_v2(df):
-    df['avg_price'] = (df['open'].rolling(window=10).mean() + df['close'].rolling(window=10).mean()) / 2
-    df['ema_cum_volume_20'] = df['volume'].rolling(window=20).sum().ewm(span=20, adjust=False).mean()
-    heuristics_matrix = (df['avg_price'] * df['ema_cum_volume_20']).dropna()
-    return heuristics_matrix

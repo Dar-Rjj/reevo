@@ -1,9 +1,0 @@
-def heuristics_v2(df):
-    '''
-    norm exit
-    '''
-    def compute_factor(row):
-        price_sum = row['open'] + row['close']
-        return (row['high'] - row['low']) / price_sum * (row['volume'] / df['volume'].mean())**2
-    heuristics_matrix = df.apply(compute_factor, axis=1)
-    return heuristics_matrix

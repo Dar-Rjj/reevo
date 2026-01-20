@@ -1,9 +1,0 @@
-def heuristics_v2(df):
-    # Calculate the 20-day and 500-day cumulative amount
-    cum_amount_20 = df['amount'].rolling(window=20).sum()
-    cum_amount_500 = df['amount'].rolling(window=500).sum()
-    
-    # Generate the new factor by dividing the 20-day cumulative amount by the 500-day cumulative amount
-    heuristics_matrix = cum_amount_20 / cum_amount_500
-    
-    return heuristics_matrix
