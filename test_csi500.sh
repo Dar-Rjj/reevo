@@ -2,7 +2,11 @@
 
 # cd Treevo
 # conda activate ReEvo
-# sh test_csi500.sh
+# bash test_csi500.sh
+
+set -a
+source ~/.env
+set +a
 
 python main.py \
     problem=csi500 \
@@ -13,4 +17,3 @@ python main.py \
     timeout=10 \
     algorithm=TreEvo \
     llm_client=openrouter \
-    llm_client.api_key='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'

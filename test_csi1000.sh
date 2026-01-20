@@ -8,4 +8,3 @@ python main.py \
     timeout=20 \
     algorithm=treevoo \
     llm_client=qwen3_api \
-    llm_client.api_key='sk-fb4917a77b7d4a2b88369204d7435aba'

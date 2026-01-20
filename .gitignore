@@ -176,3 +176,5 @@ ablation/*
 .export_cn_ex/*
 outputs/*
 tmp/*
+.sh
+result/*
