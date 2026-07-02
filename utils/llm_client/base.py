@@ -29,6 +29,8 @@ class BaseClient(object):
         for attempt in range(1000):
             try:
                 response_cur = self._chat_completion_api(messages, temperature, n)
+                if response_cur is None:
+                    continue
             except Exception as e:
                 logger.exception(e)
                 logger.info(f"Attempt {attempt+1} failed with error: {e}")

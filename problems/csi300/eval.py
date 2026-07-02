@@ -25,7 +25,7 @@ def load_heuristic_func(code_path):
 
 def solve(market_data, heuristics, mood, object_n):
     # 计算每只股票的因子值
-    market_data['factor'] = market_data.groupby('stock_code').apply(lambda x: heuristics(x.droplevel('stock_code')))
+    market_data['factor'] = heuristics(market_data)
 
     # 计算未来6日收益率
     market_data['future_return'] = market_data.groupby('stock_code')['close'].shift(-object_n) / market_data['close'] - 1
@@ -37,7 +37,24 @@ def solve(market_data, heuristics, mood, object_n):
         start_date, end_date = pd.Timestamp('2020-01-01'), pd.Timestamp('2021-01-01')
     else:
         start_date, end_date = pd.Timestamp('2021-01-01'), pd.Timestamp('2024-01-01')
-    
+
+    with open(os.path.join(os.path.dirname(__file__), "csi300.txt"), "r") as f:
+        lines = [line.strip() for line in f if line.strip()]
+
+    df = pd.DataFrame(
+        [line.split('\t') for line in lines],
+        columns=['symbol', 'start_date', 'end_date']
+    )
+
+    df['start_date'] = pd.to_datetime(df['start_date'])
+    df['end_date'] = pd.to_datetime(df['end_date'])
+    df = df[(df['start_date'] >= start_date - pd.Timedelta(days=1)) & (df['end_date'] <= end_date)]
+
+    dfs = []
+    for row in df.iterrows():
+        dfs.append(market_data.loc[pd.IndexSlice[row[1]['symbol'], row[1]['start_date']:row[1]['end_date']], :])
+    market_data = pd.concat(dfs)
+
     all_dates = market_data.index.get_level_values('date').unique()
     all_dates = all_dates[(all_dates >= start_date) & (all_dates <= end_date)]
     ic_values = []

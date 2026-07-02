@@ -1,2 +1,2 @@
-The `heuristics` function takes as input a pandas DataFrame, where the row index is (date) and the columns represent various market features (open, high, low, close, amount, volume).
+The `heuristics` function takes as input a pandas DataFrame, where the row index is (date) and the columns represent various market features (open, high, low, close, volume, amount).
 The funtion produces a pandas Series indexed by (date) representing the factor values as output.

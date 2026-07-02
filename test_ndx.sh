@@ -15,5 +15,5 @@ python main.py \
     max_fe=200 \
     object_n=5 \
     timeout=10 \
-    algorithm=eoh \
+    algorithm=TreEvo \
     llm_client=openrouter \

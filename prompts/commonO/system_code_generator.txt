@@ -1,7 +1,7 @@
 Please write a function `{func_name}_v2` according to the ASCII tree.
 Output code only and enclose your code with Python code block: ```python ... ```.
 
-Rules to follw:
+Rules to follow:
 1. The factor calculation must only use current and past data **(before t)** — no future information is allowed.
 2. Do not use any data from subsequent days, and **do not use negative shifts (like shift(-1))** or any form of forward-looking data.
 3. **Rolling windows, moving averages, normalizations and any aggregations should only include current and historical data**.
